@@ -82,7 +82,6 @@ import org.apache.hadoop.yarn.server.resourcemanager.scheduler.fair.FairSchedule
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.fifo.FifoScheduler;
 import org.apache.hadoop.yarn.sls.SLSRunner;
 import org.apache.hadoop.yarn.sls.conf.SLSConfiguration;
-import org.apache.hadoop.yarn.sls.web.SLSWebApp;
 import org.apache.hadoop.yarn.util.resource.Resources;
 import org.apache.log4j.Logger;
 
@@ -123,9 +122,6 @@ public class ResourceSchedulerWrapper
 
   // Priority of the ResourceSchedulerWrapper shutdown hook.
   public static final int SHUTDOWN_HOOK_PRIORITY = 30;
-
-  // web app
-  private SLSWebApp web;
 
   private Map<ContainerId, Resource> preemptionContainerMap =
           new ConcurrentHashMap<ContainerId, Resource>();
@@ -185,9 +181,6 @@ public class ResourceSchedulerWrapper
           if (metricsLogBW != null)  {
             metricsLogBW.write("]");
             metricsLogBW.close();
-          }
-          if (web != null) {
-            web.stop();
           }
           tearDown();
         } catch (Exception e) {
@@ -472,10 +465,6 @@ public class ResourceSchedulerWrapper
     // .csv output
     initMetricsCSVOutput();
 
-    // start web app to provide real-time tracking
-    web = new SLSWebApp(this, metricsWebAddressPort);
-    web.start();
-
     // a thread to update histogram timer
     pool = new ScheduledThreadPoolExecutor(2);
     pool.scheduleAtFixedRate(new HistogramsRunnable(), 0, 1000,
@@ -703,7 +692,7 @@ public class ResourceSchedulerWrapper
     public void run() {
       if(running) {
         // all WebApp to get real tracking json
-        String metrics = web.generateRealTimeTrackingMetrics();
+        String metrics = "";
         // output
         try {
           if(firstLine) {
