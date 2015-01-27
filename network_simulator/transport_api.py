@@ -1,0 +1,79 @@
+import os.path
+import time
+
+import configuration
+import network_simulator
+
+class TransportAPI(object):
+    """Transport API used by Transmission threads to handle coflows and send
+    coflow transmissions through MaxiNet.
+    """
+
+    # The transport binaries are copied to this path on the worker nodes
+    REMOTE_TRANSPORT_BIN_PATH = "/tmp/transport_bin"
+
+    @classmethod
+    def register_coflow(cls, coflow_description):
+        """Register a new coflow."""
+        return "COFLOW-00000"
+
+    @classmethod
+    def unregister_coflow(cls, coflow_id):
+        """Unregister a coflow.
+
+        Returns:
+            True on success, False otherwise.
+        """
+        return True
+
+    @classmethod
+    def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes):
+        """Transmit n bytes from source to destination.
+
+        Args:
+            coflow_id: Coflow id the transmission belongs to.
+            source: MaxiNet node of the source.
+            destination: MaxiNet node of the destination.
+            n_bytes: Number of bytes to transmit.
+            subscription_key: Key under which the result will be published.
+
+        Returns:
+            True on success, False otherwise.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def _get_binary_path(cls, binary):
+        """Returns path of binary on worker nodes.
+
+        Returns:
+            Path to binary on worker nodes.
+        """
+        return os.path.join(cls.REMOTE_TRANSPORT_BIN_PATH, binary)
+
+class TransportTCP(TransportAPI):
+    """TCP transport API.
+
+    This transport API sends data through MaxiNet via TCP sockets. Coflows are
+    ignored.
+    """
+
+    @classmethod
+    def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes):
+        topology = network_simulator.NetworkSimulator.get_instance().topology
+        destination_ip = topology.host_ip_map[destination.nn]
+
+        # start receiver
+        ret = destination.cmd("%s %i" % (cls._get_binary_path("tcp_receive"), \
+                configuration.get_tcp_receiver_port()))
+        if len(ret) != 0:
+            return False
+
+        # start sender
+        ret = destination.cmd("%s %s %i %i" % ( \
+                cls._get_binary_path("tcp_send"), \
+                destination_ip, configuration.get_tcp_receiver_port(), n_bytes))
+        if len(ret) != 0:
+            return False
+
+        return True

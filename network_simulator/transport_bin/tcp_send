@@ -1,0 +1,29 @@
+#!/usr/bin/env python2
+
+from argparse import ArgumentParser
+import socket
+import sys
+
+def main():
+    parser = ArgumentParser(description="Send N bytes over tcp.")
+    parser.add_argument('receiver', metavar='Receiver', help='Receiving host')
+    parser.add_argument('port', metavar='Port', help='Port receiver listens on')
+    parser.add_argument('n_bytes', metavar='N', help='Number of bytes to send')
+    args = parser.parse_args()
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((args.receiver, int(args.port)))
+
+    n_bytes = int(args.n_bytes)
+    block_size = 1024 * 1024
+    chunk = "x" * block_size
+    while n_bytes != 0:
+        if n_bytes < block_size:
+            chunk = "x" * n_bytes
+        sock.sendall(chunk)
+        n_bytes -= len(chunk)
+
+    sock.close()
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+function print_usage {
+    echo -e "usage: tcp_receive [-h] PORT"
+    echo -e
+    echo -e "Starts a tcp receiver with the given PORT."
+    echo -e
+    echo -e "positional arguments:"
+    echo -e "  PORT\t\tPort to listen on"
+    echo -e
+    echo -e "optional arguments:"
+    echo -e "  -h\t\tPrint this help"
+}
+
+PORT=$1
+
+case ${PORT} in
+   (*[^0-9]*|'')    print_usage
+                    exit;;
+   (*)              ;;
+esac
+
+nc -l ${PORT} > /dev/null &
