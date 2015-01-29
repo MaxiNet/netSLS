@@ -29,6 +29,10 @@ class Topology(MiniNetTopology):
     rack-id.
     Every Host is labeled with the corresponding hostname.
     Every Host is linked to the corresponding ToR-switch.
+
+    Attributes:
+        __mn_hostname_to_ip_map: Map MaxiNet hostname to its IP address
+        __hostname_to_mn_hostname_map: Map hostname to MaxiNet hostname
     """
 
     latency = 0.1
@@ -62,29 +66,41 @@ class Topology(MiniNetTopology):
         """
         MiniNetTopology.__init__(self)
 
-        self.host_ip_map = dict()
+        self.__mn_hostname_to_ip_map = dict()
+        self.__hostname_to_mn_hostname_map = dict()
 
         self.tor_switches = list()
 
         # Set up racks (ToRs, Hosts and links)
         rack_count = 1
         for rack in racks:
-            tor_switch = self.addSwitch(str(rack["id"]))
+            tor_switch = self.addSwitch("tor%i" % rack_count)
             self.tor_switches.append(tor_switch)
 
             host_count = 1
             for hostname in rack["hosts"]:
                 host_ip = self.make_host_ip(rack_count, host_count)
-                host = self.addHost(str(hostname), \
+                mn_hostname = self.addHost("h%i%i" % (rack_count, host_count), \
                         ip=host_ip)
-                self.host_ip_map[host] = host_ip
+                self.__mn_hostname_to_ip_map[mn_hostname] = host_ip
+                self.__hostname_to_mn_hostname_map[hostname] = mn_hostname
 
-                self.addLink(host, tor_switch, bw=Topology.edge_bandwidth_limit,
+                self.addLink(mn_hostname, tor_switch, bw=Topology.edge_bandwidth_limit,
                         delay="%ims" % Topology.latency)
 
                 host_count += 1
 
             rack_count += 1
+
+    def get_mn_hostname(self, hostname):
+        """Returns MaxiNet hostname corresponding to hostname."""
+        #TODO log error if not found
+        return self.__hostname_to_mn_hostname_map[hostname]
+
+    def get_ip_address(self, mn_hostname):
+        """Get IP address corresponding to MaxiNet hostname"""
+        #TODO log error if not found
+        return self.__mn_hostname_to_ip_map[mn_hostname]
 
 class FatTree(Topology):
     """A fat tree topology.
