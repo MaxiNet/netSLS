@@ -79,7 +79,7 @@ public class MRAMSimulator extends AMSimulator {
   // assigned maps
   private Map<ContainerId, ContainerSimulator> assignedMaps =
           new HashMap<ContainerId, ContainerSimulator>();
-  
+
   // reduces which are not yet scheduled
   private LinkedList<ContainerSimulator> pendingReduces =
           new LinkedList<ContainerSimulator>();
@@ -95,7 +95,7 @@ public class MRAMSimulator extends AMSimulator {
   // assigned reduces
   private Map<ContainerId, ContainerSimulator> assignedReduces =
           new HashMap<ContainerId, ContainerSimulator>();
-  
+
   // all maps & reduces
   private LinkedList<ContainerSimulator> allMaps =
           new LinkedList<ContainerSimulator>();
@@ -205,7 +205,7 @@ public class MRAMSimulator extends AMSimulator {
   @Override
   @SuppressWarnings("unchecked")
   protected void processResponseQueue()
-          throws InterruptedException, YarnException, IOException {
+          throws Exception {
     while (! responseQueue.isEmpty()) {
       AllocateResponse response = responseQueue.take();
 
@@ -289,7 +289,7 @@ public class MRAMSimulator extends AMSimulator {
    * restart running because of the am container killed
    */
   private void restart()
-          throws YarnException, IOException, InterruptedException {
+          throws Exception {
     // clear 
     finishedContainers = 0;
     isFinished = false;

@@ -137,7 +137,7 @@ public abstract class AMSimulator extends TaskRunner.Task {
   @Override
   public void firstStep() throws Exception {
     simulateStartTimeMS = System.currentTimeMillis() - 
-                          SLSRunner.getRunner().getStartTimeMS();
+                          SLSRunner.getInstance().getRunner().getStartTimeMS();
 
     // submit application, waiting until ACCEPTED
     submitApp();
@@ -188,7 +188,7 @@ public abstract class AMSimulator extends TaskRunner.Task {
     });
 
     simulateFinishTimeMS = System.currentTimeMillis() -
-        SLSRunner.getRunner().getStartTimeMS();
+        SLSRunner.getInstance().getRunner().getStartTimeMS();
     // record job running information
     ((ResourceSchedulerWrapper)rm.getResourceScheduler())
          .addAMRuntime(appId, 

@@ -64,13 +64,19 @@ import org.apache.hadoop.yarn.sls.utils.SLSUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.zeromq.ZMQ;
 
 @Private
 @Unstable
 public class SLSRunner {
+  /**
+   * Singleton instance
+   */
+  private static SLSRunner instance;
+
   // RM, Runner
   private ResourceManager rm;
-  private static TaskRunner runner = new TaskRunner();
+  private TaskRunner runner;
   private String[] inputTraces;
   private Configuration conf;
   private Map<String, Integer> queueAppNumMap;
@@ -102,8 +108,22 @@ public class SLSRunner {
 
   // input traces, input-rumen or input-sls
   private boolean isSLS;
+
+  /**
+   * ZMQ context for network simulator async callbacks.
+   */
+  private ZMQ.Context zmqContext;
+
+  public static SLSRunner getInstance() {
+    if (SLSRunner.instance == null) {
+      SLSRunner.instance = new SLSRunner();
+    }
+    return SLSRunner.instance;
+  }
   
-  public SLSRunner(boolean isSLS, String inputTraces[], String nodeFile,
+  private SLSRunner() {}
+
+  public void init(boolean isSLS, String inputTraces[], String nodeFile,
                    String outputDir, Set<String> trackedApps,
                    boolean printsimulation)
           throws IOException, ClassNotFoundException {
@@ -113,19 +133,21 @@ public class SLSRunner {
     this.trackedApps = trackedApps;
     this.printSimulation = printsimulation;
     metricsOutputDir = outputDir;
-    
+
     nmMap = new HashMap<NodeId, NMSimulator>();
     queueAppNumMap = new HashMap<String, Integer>();
     amMap = new HashMap<String, AMSimulator>();
     amClassMap = new HashMap<String, Class>();
-    
+
     // runner configuration
-    conf = new Configuration(false);
-    conf.addResource("sls-runner.xml");
+    this.conf = new Configuration(false);
+    this.conf.addResource("sls-runner.xml");
     // runner
-    int poolSize = conf.getInt(SLSConfiguration.RUNNER_POOL_SIZE, 
-                                SLSConfiguration.RUNNER_POOL_SIZE_DEFAULT); 
-    SLSRunner.runner.setQueueSize(poolSize);
+    int poolSize = conf.getInt(SLSConfiguration.RUNNER_POOL_SIZE,
+                                SLSConfiguration.RUNNER_POOL_SIZE_DEFAULT);
+    this.runner = new TaskRunner();
+    this.runner.setQueueSize(poolSize);
+
     // <AMType, Class> map
     for (Map.Entry e : conf) {
       String key = e.getKey().toString();
@@ -134,9 +156,11 @@ public class SLSRunner {
         amClassMap.put(amType, Class.forName(conf.get(key)));
       }
     }
+
+    this.zmqContext = ZMQ.context(1);
   }
   
-  public void start() throws Exception {
+  public void start() throws Throwable {
     // start resource manager
     startRM();
     // start node managers
@@ -462,7 +486,7 @@ public class SLSRunner {
     return nmMap;
   }
 
-  public static TaskRunner getRunner() {
+  public TaskRunner getRunner() {
     return runner;
   }
 
@@ -475,7 +499,15 @@ public class SLSRunner {
     }
   }
 
-  public static void main(String args[]) throws Exception {
+  public ZMQ.Context getZmqContext() {
+    return zmqContext;
+  }
+
+  public Configuration getConf() {
+    return conf;
+  }
+
+  public static void main(String args[]) throws Throwable {
     Options options = new Options();
     options.addOption("inputrumen", true, "input rumen files");
     options.addOption("inputsls", true, "input sls files");
@@ -523,8 +555,9 @@ public class SLSRunner {
 
     boolean isSLS = inputSLS != null;
     String inputFiles[] = isSLS ? inputSLS.split(",") : inputRumen.split(",");
-    SLSRunner sls = new SLSRunner(isSLS, inputFiles, nodeFile, output,
-        trackedJobSet, cmd.hasOption("printsimulation"));
+    SLSRunner sls = SLSRunner.getInstance();
+    sls.init(isSLS, inputFiles, nodeFile, output, trackedJobSet,
+        cmd.hasOption("printsimulation"));
     sls.start();
   }
 }
