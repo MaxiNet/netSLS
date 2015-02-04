@@ -152,6 +152,10 @@
 
 	});
         
+    function removeStatus() {
+     document.getElementById("status").innerHTML = "<br>";
+    }
+        
     function trafficIntensity(intensity) {
         
             new Ajax.Request(update_intensity_url + "?intensity=" + intensity, {
@@ -161,12 +165,13 @@
                                     },
                         onFailure:  function(){
                                         document.getElementById("status").innerHTML = "<font color='red'>Error while updating Background Traffic Intensity: webservice not reachable.</font>";
+                                        
                                     }
                 }
                 
             )
         
-        
+        setTimeout(removeStatus, 2000);
     }
 
 	</script>
