@@ -91,7 +91,7 @@ class Topology(MiniNetTopology):
             host_count = 1
             for hostname in rack["hosts"]:
                 host_ip = self.make_host_ip(rack_count, host_count)
-                mn_hostname = self.addHost("h%i%i" % (rack_count, host_count), \
+                mn_hostname = self.addHost("h%02i%02i" % (rack_count, host_count), \
                         ip=host_ip)
                 self.__mn_hostname_to_ip_map[mn_hostname] = host_ip
                 self.__hostname_to_mn_hostname_map[hostname] = mn_hostname
