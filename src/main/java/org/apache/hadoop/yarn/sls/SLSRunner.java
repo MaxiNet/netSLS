@@ -62,6 +62,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.server.resourcemanager.ResourceManager;
 import org.apache.hadoop.yarn.server.utils.BuilderUtils;
+import org.apache.hadoop.yarn.sls.statistics.CompletedTasksLogger;
 import org.apache.hadoop.yarn.sls.utils.SLSUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonFactory;
@@ -117,6 +118,11 @@ public class SLSRunner {
    */
   private ZMQ.Context zmqContext;
 
+  /**
+   * Logger for completed tasks in last interval.
+   */
+  private CompletedTasksLogger completedTasksLogger;
+
   public static SLSRunner getInstance() {
     if (SLSRunner.instance == null) {
       SLSRunner.instance = new SLSRunner();
@@ -161,6 +167,13 @@ public class SLSRunner {
     }
 
     this.zmqContext = ZMQ.context(1);
+
+    this.completedTasksLogger = new CompletedTasksLogger(
+        new File(conf.get(SLSConfiguration.COMPLETED_TASKS_LOGGER_PATH,
+            SLSConfiguration.COMPLETED_TASKS_LOGGER_PATH_DEFAULT)),
+        conf.getLong(SLSConfiguration.COMPLETED_TASKS_LOGGER_INTERVAL,
+            SLSConfiguration.COMPLETED_TASKS_LOGGER_INTERVAL_DEFAULT)
+    );
   }
   
   public void start() throws Throwable {
@@ -178,6 +191,9 @@ public class SLSRunner {
 
     // start network simulation
     startNetworkSimulation();
+
+    Thread t = new Thread(this.completedTasksLogger);
+    t.start();
 
     // print out simulation info
     printSimulationInfo();
@@ -506,8 +522,21 @@ public class SLSRunner {
             (long)(Math.ceil(maxRuntime / 1000.0)));
   }
 
+  public static void decreaseRemainingApps() {
+    remainingApps --;
+
+    if (remainingApps == 0) {
+      LOG.info("SLSRunner tears down.");
+      System.exit(0);
+    }
+  }
+
   public Map<String, AMSimulator> getAmMap() {
     return amMap;
+  }
+
+  public CompletedTasksLogger getCompletedTasksLogger() {
+    return completedTasksLogger;
   }
 
   public HashMap<NodeId, NMSimulator> getNmMap() {
@@ -516,15 +545,6 @@ public class SLSRunner {
 
   public TaskRunner getRunner() {
     return runner;
-  }
-
-  public static void decreaseRemainingApps() {
-    remainingApps --;
-
-    if (remainingApps == 0) {
-      LOG.info("SLSRunner tears down.");
-      System.exit(0);
-    }
   }
 
   public ZMQ.Context getZmqContext() {

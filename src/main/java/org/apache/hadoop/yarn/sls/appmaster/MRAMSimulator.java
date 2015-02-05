@@ -239,6 +239,8 @@ public class MRAMSimulator extends AMSimulator {
 
       // check completed containers
       if (! response.getCompletedContainersStatuses().isEmpty()) {
+        SLSRunner.getInstance().getCompletedTasksLogger().incrementCounter(
+            response.getCompletedContainersStatuses().size());
         for (ContainerStatus cs : response.getCompletedContainersStatuses()) {
           ContainerId containerId = cs.getContainerId();
           if (cs.getExitStatus() == ContainerExitStatus.SUCCESS) {
