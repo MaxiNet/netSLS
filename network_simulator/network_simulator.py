@@ -16,6 +16,7 @@ limitations under the License.
 
 import inspect
 import os.path
+import time
 import subprocess
 
 from MaxiNet.Frontend import maxinet
@@ -141,7 +142,8 @@ class NetworkSimulator(object):
             --participatory %s --participatorySleep %s --loop %s --config %s &" % (hostsPerRack, ipBase, hostId,flowFile,scaleFactorSize,scaleFactorTime,participatory,participatorySleep,loop,config ))
 
         #send start command to all traffGen processes.
-        for w in self.__cluster.workers:
+        time.sleep(10)
+        for w in self.__cluster.workers():
             w.run_cmd("killall -s USR2 traffGen &")
 
 
