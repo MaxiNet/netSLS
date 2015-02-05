@@ -120,7 +120,7 @@ class NetworkSimulator(object):
 
         #start traffGen on all emulated Hosts!
 
-        hostsPerRack = 20
+        hostsPerRack = "20"
         flowFile = "~/traffGen/flows.csv"
         scaleFactorSize = "1"
         scaleFactorTime = "150"
@@ -133,7 +133,7 @@ class NetworkSimulator(object):
         for host in self.__experiment.hosts:
             ip = host.IP()
             ipAr = ip.split(".")
-            hostId = hostsPerRack * (int(ipAr[2])-1) + int(ipAr[3])
+            hostId = int(hostsPerRack) * (int(ipAr[2]) - 1) + int(ipAr[3])
 
             host.cmd("~/traffGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %d \
             --ipBase %s --hostId %s --flowFile %s --scaleFactorSize %s --scaleFactorTime %s \
