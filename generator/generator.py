@@ -2,11 +2,14 @@
 
 import random
 import json
+import math
 
 numJobs = 10000
 
 numMapper = 4
 numReducer = 1
+
+rackSize = 20
 
 numPhysComp = 200
 
@@ -35,8 +38,10 @@ for i in range(0, numJobs):
 			inputLocation = 1;
 		if inputLocation > numPhysComp:
 			inputLocation = numPhysComp;
-		
-		task["container.host"]				= "/default-rack/node%i" % inputLocation  #location der daten (so tun wir momentan)
+	
+		rackID = int( math.ceil(inputLocation / rackSize) )
+	
+		task["container.host"]				= "/rack-%i/node%i" % (rackID, inputLocation)  #location der daten (so tun wir momentan)
 		task["container.start.ms"]			= "0"
 		task["container.end.ms"]			= str(durationMapTaskMs)
 		task["container.priority"]			= "20"
@@ -59,9 +64,11 @@ for i in range(0, numJobs):
 			inputLocation = 1;
 		if inputLocation > numPhysComp:
 			inputLocation = numPhysComp;
+
+		rackID = int( math.ceil(inputLocation / rackSize) )
 		
 		
-		task["container.host"]				= "/default-rack/node%i" % inputLocation  #location der daten (so tun wir momentan)
+		task["container.host"]				= "/rack-%i/node%i" % (rackID, inputLocation)  #location der daten (so tun wir momentan)
 		task["container.start.ms"]			= "0"
 		task["container.end.ms"]			= str(durationMapTaskMs)
 		task["container.priority"]			= "20"
