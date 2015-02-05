@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>NetSLS</title>
+    <script language="javascript" type="text/javascript" src="prototype.js"></script>
+
+    <link href="flot/examples/examples.css" rel="stylesheet" type="text/css">
+	<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../../excanvas.min.js"></script><![endif]-->
+	<script language="javascript" type="text/javascript" src="flot/jquery.js"></script>
+	<script language="javascript" type="text/javascript" src="flot/jquery.flot.js"></script>
+	<script type="text/javascript">
+
+    var update_intensity_url  = "./updateIntensity.cgi";
+        
+	$(function() {
+
+		var data_hadoop = [],
+            data_beacon = [],
+            url_hadoop_datasource = "http://fgcn-of-20/hadoopData.cgi",
+            url_beacon_datasource = "http://kermit.cs.upb.de:8080/wm/jsflowviz/json/throughput.do",
+			totalPoints = 300;
+        
+        for(var i = 0; i < totalPoints; i++) {
+            data_hadoop.push(50);
+            data_beacon.push(50);
+        }
+        
+        function updateDataAjax(data, update_url) {
+            
+            if(data.length <= 0) {
+
+            }
+            
+			if (data.length > 0)
+				data.shift()
+
+            //get new data
+            new Ajax.Request(update_url, {
+                    method:'get',
+                        onSuccess:  function(transport){
+                                        content = transport.responseText;
+                                        next = parseInt(content)
+                                        data.push(next);
+                                    },
+                        onFailure:  function(){
+                                        data.push(0);
+                                    }
+                }
+                
+            )
+
+            
+            return data;
+        }
+        
+        
+        function updateDataRandom(data) {
+            
+            if(data.length <= 0) {
+
+            }
+            
+			if (data.length > 0)
+				data.shift()
+
+            //create a random point
+            var prev = data[data.length-1]
+            var next = prev + Math.random() * 10 - 5
+            if(next > 100)
+                next = 100;
+            if(next < 0)
+                next = 0;
+            data.push(next);
+
+            
+            return data;
+        }
+
+		function getPoints(data) {
+			// Zip the generated y values with the x values
+
+			var res = [];
+			for (var i = 0; i < data.length; ++i) {
+				res.push([i, data[i]])
+			}
+
+			return res;
+		}
+
+		// Set up the control widget
+
+		var updateInterval = 200;
+		$("#updateInterval").val(updateInterval).change(function () {
+			var v = $(this).val();
+			if (v && !isNaN(+v)) {
+				updateInterval = +v;
+				if (updateInterval < 1) {
+					updateInterval = 1;
+				} else if (updateInterval > 2000) {
+					updateInterval = 2000;
+				}
+				$(this).val("" + updateInterval);
+			}
+		});
+
+		var plot_hadoop = $.plot("#placeholder-hadoop", [ getPoints(data_hadoop) ], {
+			series: {
+				shadowSize: 0	// Drawing is faster without shadows
+			},
+			yaxis: {
+				min: 0,
+				max: 100
+			},
+			xaxis: {
+				show: false
+			}
+		});
+        
+		var plot_beacon = $.plot("#placeholder-beacon", [ getPoints(data_beacon) ], {
+			series: {
+				shadowSize: 0	// Drawing is faster without shadows
+			},
+			yaxis: {
+				min: 0,
+				max: 1000
+			},
+			xaxis: {
+				show: false
+			}
+		});
+
+		function update() {
+
+            data_hadoop = updateDataAjax(data_hadoop, url_hadoop_datasource);
+            data_beacon = updateDataAjax(data_beacon, url_beacon_datasource);
+            
+			plot_hadoop.setData([getPoints(data_hadoop)]);
+            plot_beacon.setData([getPoints(data_beacon)]);            
+
+			// Since the axes don't change, we don't need to call plot.setupGrid()
+
+			plot_hadoop.draw();
+            plot_beacon.draw();
+			setTimeout(update, updateInterval);
+            
+            //document.getElementById("debug").innerHTML = getPoints(data_hadoop).join(" ");
+		}
+
+		update();
+
+
+	});
+        
+    function removeStatus() {
+     document.getElementById("status").innerHTML = "<br>";
+    }
+        
+    function trafficIntensity(intensity) {
+        
+            new Ajax.Request(update_intensity_url + "?intensity=" + intensity, {
+                    method:'get',
+                        onSuccess:  function(transport){
+                                        document.getElementById("status").innerHTML = "<font color='green'>Updated Background traffic intensity.</font>";
+                                    },
+                        onFailure:  function(){
+                                        document.getElementById("status").innerHTML = "<font color='red'>Error while updating Background Traffic Intensity: webservice not reachable.</font>";
+                                        
+                                    }
+                }
+                
+            )
+        
+        setTimeout(removeStatus, 2000);
+    }
+
+	</script>
+</head>
+<body>
+
+	<div id="header">
+        <center>
+		  <img src="netSLSLogo.png" height="100px">
+        </center>
+	</div>
+
+	<div id="content">
+
+        Completed Jobs per Second (Hadoop)
+		<div class="demo-container">
+			<div id="placeholder-hadoop" class="demo-placeholder"></div>
+		</div>
+        
+        Aggregate Throughput (Network) [MBit/s]
+		<div class="demo-container">
+			<div id="placeholder-beacon" class="demo-placeholder"></div>
+		</div>
+        
+        <div id="debug">
+        
+        </div>
+
+		<!--<p>You can update a chart periodically to get a real-time effect by using a timer to insert the new data in the plot and redraw it.</p>-->
+
+        <div id="status">
+            <br>
+        </div>
+        
+        <p>Background Traffic Intensity: &nbsp; &nbsp; &nbsp; &nbsp; 0 &nbsp;<input type="range" min="0" max="10" value="1" step="1" onchange="trafficIntensity(this.value)" /> &nbsp;10</p>
+        
+        
+		<!--<p>GUI Option: Time between updates: <input id="updateInterval" type="text" value="" style="text-align: right; width:5em"> milliseconds</p>-->
+
+	</div>
+
+	<div id="footer">
+		NetSLS - Copyright 2015 Universit&auml;t Paderborn
+	</div>
+
+</body>
+</html>

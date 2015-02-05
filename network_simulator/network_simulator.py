@@ -20,6 +20,7 @@ import subprocess
 
 from MaxiNet.Frontend import maxinet
 from tinyrpc.dispatch import public
+from mininet.node import OVSSwitch
 
 import configuration
 from publisher import Publisher
@@ -27,6 +28,8 @@ from rpc_server import RPCServer
 import topology
 from transmission import Transmission
 import transport_api
+
+import traceback
 
 class NetworkSimulator(object):
     """Implementation of the network simulators public interface.
@@ -63,6 +66,7 @@ class NetworkSimulator(object):
 
     @public
     def start_simulation(self, topo):
+      try:
         """RPC: Start a new simulation.
 
         Starts a new MaxiNet experiment with the given topology. If there is
@@ -111,8 +115,37 @@ class NetworkSimulator(object):
         # Reset & start experiment
         if self.__experiment:
             self.__experiment.stop()
-        self.__experiment = maxinet.Experiment(self.__cluster, self.topology)
+        self.__experiment = maxinet.Experiment(self.__cluster, self.topology,switch=OVSSwitch)
         self.__experiment.setup()
+
+
+        #start traffGen on all emulated Hosts!
+
+        hostsPerRack = "20"
+        flowFile = "~/traffGen/flows.csv"
+        scaleFactorSize = "1"
+        scaleFactorTime = "150"
+        participatory = "false"
+        participatorySleep = "0"
+        loop = "true"
+        config = "/tmp/traffGen.config"
+        ipBase = "10.0"
+
+        for host in self.__experiment.hosts:
+            ip = host.IP()
+            ipAr = ip.split(".")
+            hostId = int(hostsPerRack) * (int(ipAr[2]) - 1) + int(ipAr[3])
+
+            host.cmd("~/traffGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %d \
+            --ipBase %s --hostId %s --flowFile %s --scaleFactorSize %s --scaleFactorTime %s \
+            --participatory %s --participatorySleep %s --loop %s --config %s &" % (hostsPerRack, ipBase, hostId,flowFile,scaleFactorSize,scaleFactorTime,participatory,participatorySleep,loop,config ))
+
+        #send start command to all traffGen processes.
+        for w in self.__cluster.workers:
+            w.run_cmd("killall -s USR2 traffGen &")
+
+
+
 
         result = {
                 "type" : "SIMULATION_STARTED",
@@ -121,6 +154,8 @@ class NetworkSimulator(object):
         self.publisher.publish("DEFAULT", result)
 
         return True
+      except:
+        traceback.print_exc()
 
     @public
     def register_coflow(self, coflow_description):
