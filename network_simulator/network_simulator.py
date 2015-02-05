@@ -182,8 +182,10 @@ class NetworkSimulator(object):
         Returns:
             transmission id of type integer (unique).
         """
-        mn_source = self.__experiment.get_node(source)
-        mn_destination = self.__experiment.get_node(destination)
+        mn_source = self.__experiment.get_node(
+                self.topology.get_mn_hostname(source))
+        mn_destination = self.__experiment.get_node(
+                self.topology.get_mn_hostname(destination))
         transmission = Transmission(coflow_id, mn_source, mn_destination, \
                 n_bytes, subscription_key)
         transmission.start()

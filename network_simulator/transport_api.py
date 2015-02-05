@@ -77,7 +77,7 @@ class TransportTCP(TransportAPI):
     @classmethod
     def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes):
         topology = network_simulator.NetworkSimulator.get_instance().topology
-        destination_ip = topology.host_ip_map[destination.nn]
+        destination_ip = topology.get_ip_address(destination.nn)
 
         # start receiver
         ret = destination.cmd("%s %i" % (cls._get_binary_path("tcp_receive"), \
