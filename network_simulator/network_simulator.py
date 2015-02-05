@@ -28,6 +28,8 @@ import topology
 from transmission import Transmission
 import transport_api
 
+import traceback
+
 class NetworkSimulator(object):
     """Implementation of the network simulators public interface.
 
@@ -63,6 +65,7 @@ class NetworkSimulator(object):
 
     @public
     def start_simulation(self, topo):
+      try:
         """RPC: Start a new simulation.
 
         Starts a new MaxiNet experiment with the given topology. If there is
@@ -117,7 +120,7 @@ class NetworkSimulator(object):
 
         #start traffGen on all emulated Hosts!
 
-        hostsPerRack = "20"
+        hostsPerRack = 20
         flowFile = "~/traffGen/flows.csv"
         scaleFactorSize = "1"
         scaleFactorTime = "150"
@@ -130,9 +133,9 @@ class NetworkSimulator(object):
         for host in self.__experiment.hosts:
             ip = host.IP()
             ipAr = ip.split(".")
-            hostId = hostsPerRack * (ipAr[2]-1) + ipAr[3]
+            hostId = hostsPerRack * (int(ipAr[2])-1) + int(ipAr[3])
 
-            host.cmd("~/traffGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %s \
+            host.cmd("~/traffGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %d \
             --ipBase %s --hostId %s --flowFile %s --scaleFactorSize %s --scaleFactorTime %s \
             --participatory %s --participatorySleep %s --loop %s --config %s &" % (hostsPerRack, ipBase, hostId,flowFile,scaleFactorSize,scaleFactorTime,participatory,participatorySleep,loop,config ))
 
@@ -150,6 +153,8 @@ class NetworkSimulator(object):
         self.publisher.publish("DEFAULT", result)
 
         return True
+      except:
+        traceback.print_exc()
 
     @public
     def register_coflow(self, coflow_description):
