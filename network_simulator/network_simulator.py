@@ -20,6 +20,7 @@ import subprocess
 
 from MaxiNet.Frontend import maxinet
 from tinyrpc.dispatch import public
+from mininet.node import OVSSwitch
 
 import configuration
 from publisher import Publisher
@@ -114,7 +115,7 @@ class NetworkSimulator(object):
         # Reset & start experiment
         if self.__experiment:
             self.__experiment.stop()
-        self.__experiment = maxinet.Experiment(self.__cluster, self.topology)
+        self.__experiment = maxinet.Experiment(self.__cluster, self.topology,switch=OVSSwitch)
         self.__experiment.setup()
 
 
