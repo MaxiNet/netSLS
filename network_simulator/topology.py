@@ -42,6 +42,14 @@ class Topology(MiniNetTopology):
 
     qsize = 75
 
+
+    dpid = 0
+
+    @classmethod
+    def makeDPID(cls):
+        Topology.dpid = Topology.dpid + 1
+        return "%x" % Topology.dpid
+
     def make_host_ip(self, rack, host):
         """Generates an IP address from rack number and host number.
 
@@ -77,7 +85,7 @@ class Topology(MiniNetTopology):
         # Set up racks (ToRs, Hosts and links)
         rack_count = 1
         for rack in racks:
-            tor_switch = self.addSwitch("tor%i" % rack_count)
+            tor_switch = self.addSwitch("tor%i" % rack_count, dpid = Topology.makeDPID())
             self.tor_switches.append(tor_switch)
 
             host_count = 1
@@ -89,7 +97,7 @@ class Topology(MiniNetTopology):
                 self.__hostname_to_mn_hostname_map[hostname] = mn_hostname
 
                 self.addLink(mn_hostname, tor_switch, bw=Topology.edge_bandwidth_limit,
-                        delay=str(Topology.latency) + "ms",  use_tbf=False, enable_red=False, max_queue_size=qsize)
+                        delay=str(Topology.latency) + "ms",  use_tbf=False, enable_red=False, max_queue_size=Topology.qsize)
 
                 host_count += 1
 
@@ -121,7 +129,7 @@ class FatTree(Topology):
             new_todo = []
             for i in range(0, len(todo), 2):
                 switch_id = switch_count * (256 * 256)
-                sw = self.addSwitch('s' + str(switch_count))
+                sw = self.addSwitch('s' + str(switch_count), dpid = Topology.makeDPID())
                 switch_count += 1
                 new_todo.append(sw)
 
@@ -142,8 +150,6 @@ class Clos(Topology):
     """A Clos topology
     """
 
-    def makeDPID(self, i):
-        return "%x" % i
 
     def __init__(self, racks):
         Topology.__init__(self, racks)
@@ -159,9 +165,6 @@ class Clos(Topology):
         pod = []
         core = []
 
-
-
-
         s = 1
 
         todo = self.tor_switches # nodes that have to be integrated into the tree
@@ -169,16 +172,16 @@ class Clos(Topology):
 
         #build core:
         for c in range(numCore):
-            cs = self.addSwitch('s' + str(s), dpid=self.makeDPID(s))
+            cs = self.addSwitch('s' + str(s), dpid=Topology.makeDPID())
             s = s + 1
             core.append(cs)
 
 
         ### build Pods
         for p in range(numPods):
-            p1 = self.addSwitch('s' + str(s), dpid=self.makeDPID(s))
+            p1 = self.addSwitch('s' + str(s), dpid=Topology.makeDPID())
             s = s + 1
-            p2 = self.addSwitch('s' + str(s), dpid=self.makeDPID(s))
+            p2 = self.addSwitch('s' + str(s), dpid=Topology.makeDPID())
             s = s + 1
 
             pod.append(p1)
