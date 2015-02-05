@@ -1,5 +1,5 @@
 """
-Copyright 2015 Malte Splietker
+Copyright 2015 Malte Splietker, Philip Wette
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ limitations under the License.
 
 import random
 import re
+import math
 
 from mininet.topo import Topo as MiniNetTopology
 
@@ -130,3 +131,73 @@ class FatTree(Topology):
 
             todo = new_todo
             bandwidth = 2.0 * bandwidth
+
+
+
+
+
+class Clos(Topology):
+    """A Clos topology
+    """
+
+    def makeDPID(self, i):
+        return "%x" % i
+
+    def __init__(self, racks):
+        Topology.__init__(self, racks)
+
+        numCore = 2
+        podSize = 4
+        numPods = int(math.ceil(len(racks) / podSize))
+
+        bw = 50
+        lat = 0.05
+        qsize = 75
+
+        pod = []
+        core = []
+
+
+
+
+        s = 1
+
+        todo = self.tor_switches # nodes that have to be integrated into the tree
+
+
+        #build core:
+        for c in range(numCore):
+            cs = self.addSwitch('s' + str(s), dpid=self.makeDPID(s))
+            s = s + 1
+            core.append(cs)
+
+
+        ### build Pods
+        for p in range(numPods):
+            p1 = self.addSwitch('s' + str(s), dpid=self.makeDPID(s))
+            s = s + 1
+            p2 = self.addSwitch('s' + str(s), dpid=self.makeDPID(s))
+            s = s + 1
+
+            pod.append(p1)
+            pod.append(p2)
+
+            #wire tors to this pod:
+            start = p * podSize
+            end = (p+1) * podSize
+            if end > len(racks):
+                end = len(racks)+1
+
+            for i in range(start, end):
+                sw = racks[i]
+                self.addLink(p1, sw, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)
+                self.addLink(p2, sw, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)
+
+        ##wire core and pods:
+        if numCore > 0:
+            for k, v in enumerate(pod):
+                #calculate the indices of the core switches:
+                i1 = (k * 2) % numCore
+                i2 = (k * 2 + 1) % numCore
+                self.addLink(core[i1], v, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)
+                self.addLink(core[i2], v, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)

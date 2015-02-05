@@ -114,6 +114,35 @@ class NetworkSimulator(object):
         self.__experiment = maxinet.Experiment(self.__cluster, self.topology)
         self.__experiment.setup()
 
+
+        #start traffGen on all emulated Hosts!
+
+        hostsPerRack = "20"
+        flowFile = "~/traffGen/flows.csv"
+        scaleFactorSize = "1"
+        scaleFactorTime = "150"
+        participatory = "false"
+        participatorySleep = "0"
+        loop = "true"
+        config = "/tmp/traffGen.config"
+        ipBase = "10.0"
+
+        for host in self.__experiment.hosts:
+            ip = host.IP()
+            ipAr = ip.split(".")
+            hostId = hostsPerRack * (ipAr[2]-1) + ipAr[3]
+
+            host.cmd("~/traffGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %s \
+            --ipBase %s --hostId %s --flowFile %s --scaleFactorSize %s --scaleFactorTime %s \
+            --participatory %s --participatorySleep %s --loop %s --config %s &" % (hostsPerRack, ipBase, hostId,flowFile,scaleFactorSize,scaleFactorTime,participatory,participatorySleep,loop,config ))
+
+        #send start command to all traffGen processes.
+        for w in self.__cluster.workers:
+            w.run_cmd("killall -s USR2 traffGen &")
+
+
+
+
         result = {
                 "type" : "SIMULATION_STARTED",
                 "data" : {}
