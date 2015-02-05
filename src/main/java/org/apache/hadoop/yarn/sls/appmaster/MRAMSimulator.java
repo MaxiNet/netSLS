@@ -43,6 +43,7 @@ import org.apache.hadoop.yarn.security.AMRMTokenIdentifier;
 import org.apache.hadoop.yarn.server.resourcemanager.ResourceManager;
 import org.apache.hadoop.yarn.server.utils.BuilderUtils;
 
+import org.apache.hadoop.yarn.sls.networksimulator.NetworkSimulatorClient;
 import org.apache.hadoop.yarn.sls.scheduler.ContainerSimulator;
 import org.apache.hadoop.yarn.sls.SLSRunner;
 import org.apache.log4j.Logger;
@@ -109,12 +110,15 @@ public class MRAMSimulator extends AMSimulator {
   private int reduceTotal = 0;
   // waiting for AM container 
   private boolean isAMContainerRunning = false;
+
   private Container amContainer;
   // finished
   private boolean isFinished = false;
   // resource for AM container
   private final static int MR_AM_CONTAINER_RESOURCE_MEMORY_MB = 1024;
   private final static int MR_AM_CONTAINER_RESOURCE_VCORES = 1;
+
+  private String coflowId;
 
   public final Logger LOG = Logger.getLogger(MRAMSimulator.class);
 
@@ -144,10 +148,34 @@ public class MRAMSimulator extends AMSimulator {
     totalContainers = mapTotal + reduceTotal;
   }
 
+  private void registerCoflow() throws Exception {
+    NetworkSimulatorClient nsClient = new NetworkSimulatorClient();
+    try {
+      coflowId = nsClient.registerCoflow();
+    } catch (Throwable t) {
+      throw new Exception("Failed to register coflow.\n" + t.getStackTrace());
+    }
+  }
+
+  private void unregisterCoflow() throws Exception {
+    NetworkSimulatorClient nsClient = new NetworkSimulatorClient();
+
+    if (coflowId == null) {
+      throw new Exception("Failed to unregister coflow: no coflow registered.");
+    }
+
+    try {
+      nsClient.unregisterCoflow(coflowId);
+    } catch (Throwable t) {
+      throw new Exception("Error while registering coflow:\n" + t.getStackTrace());
+    }
+  }
+
   @Override
   public void firstStep() throws Exception {
     super.firstStep();
-    
+
+    registerCoflow();
     requestAMContainer();
   }
 
@@ -186,7 +214,7 @@ public class MRAMSimulator extends AMSimulator {
         // get AM container
         Container container = response.getAllocatedContainers().get(0);
         se.getNmMap().get(container.getNodeId())
-                .addNewContainer(container, -1L);
+                .addNewContainer(container, null);
         // start AM container
         amContainer = container;
         LOG.debug(MessageFormat.format("Application {0} starts its " +
@@ -272,14 +300,14 @@ public class MRAMSimulator extends AMSimulator {
                   "launch a mapper ({1}).", appId, container.getId()));
           assignedMaps.put(container.getId(), cs);
           se.getNmMap().get(container.getNodeId())
-                  .addNewContainer(container, cs.getLifeTime());
+                  .addNewContainer(container, cs);
         } else if (! this.scheduledReduces.isEmpty()) {
           ContainerSimulator cs = scheduledReduces.remove();
           LOG.debug(MessageFormat.format("Application {0} starts a " +
                   "launch a reducer ({1}).", appId, container.getId()));
           assignedReduces.put(container.getId(), cs);
           se.getNmMap().get(container.getNodeId())
-                  .addNewContainer(container, cs.getLifeTime());
+                  .addNewContainer(container, cs);
         }
       }
     }
@@ -303,6 +331,11 @@ public class MRAMSimulator extends AMSimulator {
     pendingReduces.addAll(pendingReduces);
     isAMContainerRunning = false;
     amContainer = null;
+
+    // Start a new coflow
+    unregisterCoflow();
+    registerCoflow();
+
     // resent am container request
     requestAMContainer();
   }
@@ -392,6 +425,8 @@ public class MRAMSimulator extends AMSimulator {
   public void lastStep() throws Exception {
     super.lastStep();
 
+    unregisterCoflow();
+
     // clear data structures
     allMaps.clear();
     allReduces.clear();
@@ -404,5 +439,17 @@ public class MRAMSimulator extends AMSimulator {
     scheduledMaps.clear();
     scheduledReduces.clear();
     responseQueue.clear();
+  }
+
+  public LinkedList<ContainerSimulator> getAllMaps() {
+    return allMaps;
+  }
+
+  public Container getAmContainer() {
+    return amContainer;
+  }
+
+  public String getCoflowId() {
+    return coflowId;
   }
 }

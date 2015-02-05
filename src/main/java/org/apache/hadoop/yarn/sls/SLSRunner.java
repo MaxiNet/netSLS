@@ -44,6 +44,8 @@ import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNode;
 import org.apache.hadoop.yarn.sls.appmaster.AMSimulator;
 import org.apache.hadoop.yarn.sls.conf.SLSConfiguration;
+import org.apache.hadoop.yarn.sls.networksimulator.NetworkSimulatorClient;
+import org.apache.hadoop.yarn.sls.networksimulator.Topology;
 import org.apache.hadoop.yarn.sls.nodemanager.NMSimulator;
 import org.apache.hadoop.yarn.sls.scheduler.ContainerSimulator;
 import org.apache.hadoop.yarn.sls.scheduler.ResourceSchedulerWrapper;
@@ -88,6 +90,7 @@ public class SLSRunner {
   
   // AM simulator
   private int AM_ID;
+
   private Map<String, AMSimulator> amMap;
   private Set<String> trackedApps;
   private Map<String, Class> amClassMap;
@@ -172,12 +175,26 @@ public class SLSRunner {
                             .setQueueSet(this.queueAppNumMap.keySet());
     ((ResourceSchedulerWrapper) rm.getResourceScheduler())
                             .setTrackedAppSet(this.trackedApps);
+
+    // start network simulation
+    startNetworkSimulation();
+
     // print out simulation info
     printSimulationInfo();
     // blocked until all nodes RUNNING
     waitForNodesRunning();
     // starting the runner once everything is ready to go,
     runner.start();
+  }
+
+  private void startNetworkSimulation() throws Throwable {
+    Set<RMNode> nodes = new HashSet<RMNode>();
+    for (NMSimulator nm : nmMap.values()) {
+      nodes.add(nm.getNode());
+    }
+
+    NetworkSimulatorClient nwClient = new NetworkSimulatorClient();
+    nwClient.startSimulation(new Topology(nodes));
   }
   
   private void startRM() throws IOException, ClassNotFoundException {
@@ -327,9 +344,16 @@ public class SLSRunner {
             long lifeTime = taskFinish - taskStart;
             int priority = Integer.parseInt(
                     jsonTask.get("container.priority").toString());
+            long inputBytes = Long.parseLong(
+                    jsonTask.get("container.inputBytes").toString());
+            long outputBytes = Long.parseLong(
+                jsonTask.get("container.outputBytes").toString());
+            List<String> splitLocations = (List<String>) jsonTask.get(
+                    "container.splitLocations");
             String type = jsonTask.get("container.type").toString();
             containerList.add(new ContainerSimulator(containerResource,
-                    lifeTime, hostname, priority, type));
+                    lifeTime, hostname, priority, type, inputBytes,
+                    outputBytes, splitLocations));
           }
 
           // create a new AM
@@ -403,8 +427,8 @@ public class SLSRunner {
             String hostname = taskAttempt.getHostName().getValue();
             long containerLifeTime = taskAttempt.getFinishTime()
                     - taskAttempt.getStartTime();
-            containerList.add(new ContainerSimulator(containerResource,
-                    containerLifeTime, hostname, 10, "map"));
+//            containerList.add(new ContainerSimulator(containerResource,
+//                    containerLifeTime, hostname, 10, "map"));
           }
 
           // reduce tasks
@@ -414,8 +438,8 @@ public class SLSRunner {
             String hostname = taskAttempt.getHostName().getValue();
             long containerLifeTime = taskAttempt.getFinishTime()
                     - taskAttempt.getStartTime();
-            containerList.add(new ContainerSimulator(containerResource,
-                    containerLifeTime, hostname, 20, "reduce"));
+//            containerList.add(new ContainerSimulator(containerResource,
+//                    containerLifeTime, hostname, 20, "reduce"));
           }
 
           // create a new AM
@@ -480,6 +504,10 @@ public class SLSRunner {
             (int)(Math.ceil((numAMs + 0.0) / queueAppNumMap.size())));
     simulateInfoMap.put("Estimated simulate time (s)",
             (long)(Math.ceil(maxRuntime / 1000.0)));
+  }
+
+  public Map<String, AMSimulator> getAmMap() {
+    return amMap;
   }
 
   public HashMap<NodeId, NMSimulator> getNmMap() {

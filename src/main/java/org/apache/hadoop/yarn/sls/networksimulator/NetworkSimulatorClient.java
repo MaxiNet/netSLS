@@ -12,23 +12,59 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 package org.apache.hadoop.yarn.sls.networksimulator;
 
-import com.googlecode.jsonrpc4j.JsonRpcClient;
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
+import org.apache.hadoop.yarn.sls.SLSRunner;
+import org.apache.hadoop.yarn.sls.conf.SLSConfiguration;
+import org.apache.log4j.Logger;
 
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 public class NetworkSimulatorClient {
+  // logger
+  public final static Logger LOG = Logger.getLogger(NetworkSimulatorClient.class);
 
-    private JsonRpcHttpClient rpcClient;
+  private JsonRpcHttpClient rpcClient;
 
-    public NetworkSimulatorClient(URL url) {
-        rpcClient = new JsonRpcHttpClient(url);
+  public NetworkSimulatorClient() {
+    try {
+      rpcClient = new JsonRpcHttpClient(new URL(SLSRunner.getInstance().getConf().get(SLSConfiguration.NETWORKSIMULATOR_RPC_URL)));
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
     }
+  }
 
-    public void startSimulation() throws Throwable {
-        Boolean result = rpcClient.invoke("start_simulation", new Object[]{1}, Boolean.class);
-    }
+  public Boolean startSimulation(Topology topology) throws Throwable {
+    LOG.info("Invoking start_simulation");
+    return rpcClient.invoke("start_simulation", new Object[]{topology.toJson()}, Boolean.class);
+  }
+
+  public String registerCoflow() throws Throwable {
+    LOG.info("Invoking register_coflow");
+    // TODO: Replace dummy by read coflow description
+    Map<String, String> dummy = new HashMap<String, String>();
+    dummy.put("coflow_description", "");
+    return rpcClient.invoke("register_coflow", dummy, String.class);
+  }
+
+  public Boolean unregisterCoflow(String coflowId) throws Throwable {
+    LOG.info("Invoking unregister_coflow");
+    return rpcClient.invoke("unregister_coflow", new Object[]{coflowId}, Boolean.class);
+  }
+
+  public Integer transmitNBytes(String coflowId, String source, String destination, Long nBytes,
+      String subscriptionKey) throws Throwable {
+    LOG.info("Invoking transmit_n_bytes with coflowId: " + coflowId
+        + ", source: " + source
+        + ", destination: " + destination
+        + ", n_bytes: " + nBytes.toString()
+        + ", subscription_key: " + subscriptionKey);
+    return rpcClient.invoke("transmit_n_bytes", new Object[]{coflowId, source, destination, nBytes, subscriptionKey},
+        Integer.class);
+  }
 }

@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.DelayQueue;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.classification.InterfaceAudience.Private;
 import org.apache.hadoop.classification.InterfaceStability.Unstable;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
@@ -50,12 +49,17 @@ import org.apache.hadoop.yarn.server.api.records.NodeStatus;
 import org.apache.hadoop.yarn.server.resourcemanager.ResourceManager;
 import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNode;
 import org.apache.hadoop.yarn.server.utils.BuilderUtils;
+import org.apache.hadoop.yarn.sls.SLSRunner;
+import org.apache.hadoop.yarn.sls.conf.SLSConfiguration;
 import org.apache.hadoop.yarn.util.Records;
 import org.apache.log4j.Logger;
 
 import org.apache.hadoop.yarn.sls.scheduler.ContainerSimulator;
 import org.apache.hadoop.yarn.sls.scheduler.TaskRunner;
 import org.apache.hadoop.yarn.sls.utils.SLSUtils;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.zeromq.ZMQ;
 
 @Private
 @Unstable
@@ -68,14 +72,25 @@ public class NMSimulator extends TaskRunner.Task {
   private List<ContainerId> completedContainerList;
   private List<ContainerId> releasedContainerList;
   private DelayQueue<ContainerSimulator> containerQueue;
+  /**
+   * All containers currently running.
+   */
   private Map<ContainerId, ContainerSimulator> runningContainers;
+
+  /**
+   * All containers currently waiting for transmissions to complete (transmission phase)
+   */
+  private List<ContainerSimulator> containersWaitingForTransmission;
   private List<ContainerId> amContainerList;
   // resource manager
   private ResourceManager rm;
   // heart beat response id
   private int RESPONSE_ID = 1;
   private final static Logger LOG = Logger.getLogger(NMSimulator.class);
-  
+
+  private String subscriptionKey;
+  private ZMQ.Socket zmqSubscriber;
+
   public void init(String nodeIdStr, int memory, int cores,
           int dispatchTime, int heartBeatInterval, ResourceManager rm)
           throws IOException, YarnException {
@@ -96,6 +111,7 @@ public class NMSimulator extends TaskRunner.Task {
             Collections.synchronizedList(new ArrayList<ContainerId>());
     runningContainers =
             new ConcurrentHashMap<ContainerId, ContainerSimulator>();
+    containersWaitingForTransmission = new ArrayList<ContainerSimulator>();
     // register NM with RM
     RegisterNodeManagerRequest req =
             Records.newRecord(RegisterNodeManagerRequest.class);
@@ -105,6 +121,12 @@ public class NMSimulator extends TaskRunner.Task {
     RegisterNodeManagerResponse response = rm.getResourceTrackerService()
             .registerNodeManager(req);
     masterKey = response.getNMTokenMasterKey();
+
+    // Setup zmq subscriber, subscribe to this node's
+    subscriptionKey = this.node.getHostName();
+    zmqSubscriber = SLSRunner.getInstance().getZmqContext().socket(ZMQ.SUB);
+    zmqSubscriber.connect(SLSRunner.getInstance().getConf().get(SLSConfiguration.NETWORKSIMULATOR_ZMQ_URL));
+    zmqSubscriber.subscribe(subscriptionKey.getBytes());
   }
 
   @Override
@@ -114,14 +136,46 @@ public class NMSimulator extends TaskRunner.Task {
 
   @Override
   public void middleStep() throws Exception {
+    // Check for completed transmissions
+    byte[] msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
+    while(msg != null) {
+      String message = new String(msg).split("\n")[1];
+
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode response = mapper.readTree(message);
+      if (! response.get("type").getTextValue().equals("TRANSMISSION_SUCCESSFUL")) {
+        continue;
+      }
+      Integer transmissionId = response.get("data").get("transmission_id").getIntValue();
+
+      LOG.info("Transmission complete. transmission_id: " + transmissionId
+          + ", duration: " + response.get("data").get("duration").getDoubleValue());
+
+      for (ContainerSimulator cs : containersWaitingForTransmission) {
+        cs.notifyTransmissionCompleted(transmissionId);
+      }
+
+      msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
+    }
+
+    // Find all ContainerSimulator done with transmissions phase and start work phase
+    List<ContainerSimulator> completed = new ArrayList<ContainerSimulator>();
+    for (ContainerSimulator cs : containersWaitingForTransmission) {
+      if (cs.isAllTransmissionsCompleted()) {
+        cs.startWork();
+        completed.add(cs);
+      }
+    }
+    containersWaitingForTransmission.removeAll(completed);
+
     // we check the lifetime for each running containers
     ContainerSimulator cs = null;
     synchronized(completedContainerList) {
       while ((cs = containerQueue.poll()) != null) {
-        runningContainers.remove(cs.getId());
-        completedContainerList.add(cs.getId());
+        runningContainers.remove(cs.getAssignedContainer().getId());
+        completedContainerList.add(cs.getAssignedContainer().getId());
         LOG.debug(MessageFormat.format("Container {0} has completed",
-                cs.getId()));
+                cs.getAssignedContainer().getId()));
       }
     }
     
@@ -177,7 +231,7 @@ public class NMSimulator extends TaskRunner.Task {
     ArrayList<ContainerStatus> csList = new ArrayList<ContainerStatus>();
     // add running containers
     for (ContainerSimulator container : runningContainers.values()) {
-      csList.add(newContainerStatus(container.getId(),
+      csList.add(newContainerStatus(container.getAssignedContainer().getId(),
         ContainerState.RUNNING, ContainerExitStatus.SUCCESS));
     }
     synchronized(amContainerList) {
@@ -224,24 +278,26 @@ public class NMSimulator extends TaskRunner.Task {
   }
 
   /**
-   * launch a new container with the given life time
+   * launch a ContainerSimulator on a newly allocated Container.
+   *
+   * @param container Allocated container
+   * @param cs Container simulator. If cs is null the container is an AM, else it is a map/reduce.
    */
-  public void addNewContainer(Container container, long lifeTimeMS) {
+  public void addNewContainer(Container container, ContainerSimulator cs) {
     LOG.debug(MessageFormat.format("NodeManager {0} launches a new " +
             "container ({1}).", node.getNodeID(), container.getId()));
-    if (lifeTimeMS != -1) {
-      // normal container
-      ContainerSimulator cs = new ContainerSimulator(container.getId(),
-              container.getResource(), lifeTimeMS + System.currentTimeMillis(),
-              lifeTimeMS);
-      containerQueue.add(cs);
-      runningContainers.put(cs.getId(), cs);
-    } else {
+    if (cs == null) {
       // AM container
-      // -1 means AMContainer
       synchronized(amContainerList) {
         amContainerList.add(container.getId());
       }
+    } else {
+      // normal container
+      cs.setAssignedContainer(container);
+      cs.startTransmission(subscriptionKey);
+      containersWaitingForTransmission.add(cs);
+      containerQueue.add(cs);
+      runningContainers.put(cs.getAssignedContainer().getId(), cs);
     }
   }
 
@@ -256,20 +312,5 @@ public class NMSimulator extends TaskRunner.Task {
     synchronized(completedContainerList) {
       completedContainerList.add(containerId);
     }
-  }
-
-  @VisibleForTesting
-  Map<ContainerId, ContainerSimulator> getRunningContainers() {
-    return runningContainers;
-  }
-
-  @VisibleForTesting
-  List<ContainerId> getAMContainers() {
-    return amContainerList;
-  }
-
-  @VisibleForTesting
-  List<ContainerId> getCompletedContainers() {
-    return completedContainerList;
   }
 }

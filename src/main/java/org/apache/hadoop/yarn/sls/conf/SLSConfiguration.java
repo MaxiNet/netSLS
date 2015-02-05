@@ -70,4 +70,8 @@ public class SLSConfiguration {
   public static final String CONTAINER_VCORES = CONTAINER_PREFIX + "vcores";
   public static final int CONTAINER_VCORES_DEFAULT = 1;
 
+  // network simulator
+  public static final String NETWORKSIMULATOR_PREFIX = PREFIX + "networksimulator.";
+  public static final String NETWORKSIMULATOR_RPC_URL = NETWORKSIMULATOR_PREFIX + "rpc.url";
+  public static final String NETWORKSIMULATOR_ZMQ_URL = NETWORKSIMULATOR_PREFIX + "zmq.url";
 }
