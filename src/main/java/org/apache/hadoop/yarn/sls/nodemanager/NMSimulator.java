@@ -140,6 +140,7 @@ public class NMSimulator extends TaskRunner.Task {
     byte[] msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
     while(msg != null) {
       String message = new String(msg).split("\n")[1];
+      msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
 
       ObjectMapper mapper = new ObjectMapper();
       JsonNode response = mapper.readTree(message);
@@ -154,8 +155,6 @@ public class NMSimulator extends TaskRunner.Task {
       for (ContainerSimulator cs : containersWaitingForTransmission) {
         cs.notifyTransmissionCompleted(transmissionId);
       }
-
-      msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
     }
 
     // Find all ContainerSimulator done with transmissions phase and start work phase
@@ -207,6 +206,7 @@ public class NMSimulator extends TaskRunner.Task {
           } else {
             cs = runningContainers.remove(containerId);
             containerQueue.remove(cs);
+            containersWaitingForTransmission.remove(cs);
             releasedContainerList.add(containerId);
             LOG.debug(MessageFormat.format("NodeManager {0} releases a " +
                 "container ({1}).", node.getNodeID(), containerId));
@@ -294,10 +294,10 @@ public class NMSimulator extends TaskRunner.Task {
     } else {
       // normal container
       cs.setAssignedContainer(container);
-      cs.startTransmission(subscriptionKey);
       containersWaitingForTransmission.add(cs);
       containerQueue.add(cs);
       runningContainers.put(cs.getAssignedContainer().getId(), cs);
+      cs.startTransmission(subscriptionKey);
     }
   }
 
