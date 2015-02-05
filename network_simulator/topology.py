@@ -36,9 +36,11 @@ class Topology(MiniNetTopology):
         __hostname_to_mn_hostname_map: Map hostname to MaxiNet hostname
     """
 
-    latency = 0.1
+    latency = 0.05
 
     edge_bandwidth_limit = 10
+
+    qsize = 75
 
     def make_host_ip(self, rack, host):
         """Generates an IP address from rack number and host number.
@@ -87,7 +89,7 @@ class Topology(MiniNetTopology):
                 self.__hostname_to_mn_hostname_map[hostname] = mn_hostname
 
                 self.addLink(mn_hostname, tor_switch, bw=Topology.edge_bandwidth_limit,
-                        delay="%ims" % Topology.latency)
+                        delay=str(Topology.latency) + "ms",  use_tbf=False, enable_red=False, max_queue_size=qsize)
 
                 host_count += 1
 
