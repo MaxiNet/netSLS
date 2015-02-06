@@ -11,7 +11,7 @@ numReducer = 1
 
 rackSize = 20
 
-numPhysComp = 200
+numPhysComp = 320
 
 durationMapTaskMs = 1000
 fileSizeBytes = 16 * int(1e6 *8)
