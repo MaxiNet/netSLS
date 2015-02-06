@@ -67,7 +67,6 @@ class NetworkSimulator(object):
 
     @public
     def start_simulation(self, topo):
-      try:
         """RPC: Start a new simulation.
 
         Starts a new MaxiNet experiment with the given topology. If there is
@@ -90,81 +89,90 @@ class NetworkSimulator(object):
         Returns:
             True on success, False otherwise.
         """
-        # Copy transport api executables onto workers
-        for worker in self.__cluster.worker:
-          dest_dir = transport_api.TransportAPI.REMOTE_TRANSPORT_BIN_PATH
-          rm_cmd = "ssh %s rm -rf %s" % (worker.hn(), dest_dir)
-          mkdir_cmd = "ssh %s mkdir -p %s" % (worker.hn(), \
-                  os.path.dirname(dest_dir))
-          copy_cmd = "scp -r ./transport_bin %s:%s" % (worker.hn(), dest_dir)
-          subprocess.check_output(rm_cmd.split())
-          subprocess.check_output(mkdir_cmd.split())
-          subprocess.check_output(copy_cmd.split())
+        try:
+            # Copy transport api executables onto workers
+            for worker in self.__cluster.worker:
+                dest_dir = transport_api.TransportAPI.REMOTE_TRANSPORT_BIN_PATH
+                rm_cmd = "ssh %s rm -rf %s" % (worker.hn(), dest_dir)
+                mkdir_cmd = "ssh %s mkdir -p %s" % (worker.hn(), \
+                        os.path.dirname(dest_dir))
+                copy_cmd = "scp -r ./transport_bin %s:%s" % (worker.hn(), \
+                        dest_dir)
+                subprocess.check_output(rm_cmd.split())
+                subprocess.check_output(mkdir_cmd.split())
+                subprocess.check_output(copy_cmd.split())
 
-        # Create topology object
-        topology_class = None
-        for key, value in inspect.getmembers(topology, inspect.isclass):
-          if key == topo["type"]:
-            topology_class = value
-            break
-        if not topology_class:
-          print("ERROR: topology class \"%s\" not found." % topo["type"])
-          return False
+            # Create topology object
+            topology_class = None
+            for key, value in inspect.getmembers(topology, inspect.isclass):
+                if key == topo["type"]:
+                    topology_class = value
+                    break
+            if not topology_class:
+                print("ERROR: topology class \"%s\" not found." % topo["type"])
+                return False
 
-        self.topology = topology_class(**topo["arguments"])
+            self.topology = topology_class(**topo["arguments"])
 
-        # Reset & start experiment
-        if self.__experiment:
-          self.__experiment.stop()
-        self.__experiment = maxinet.Experiment(self.__cluster, self.topology, \
-                switch=OVSSwitch)
-        self.__experiment.setup()
+            # Reset & start experiment
+            if self.__experiment:
+                for host in self.__experiment.hosts:
+                    # tear down transmission api
+                    configuration.get_transport_api().teardown(host)
+                self.__experiment.stop()
+            self.__experiment = maxinet.Experiment(self.__cluster, \
+                    self.topology, switch=OVSSwitch)
+            self.__experiment.setup()
 
-        #start traffGen on all emulated Hosts!
+            #start traffGen on all emulated Hosts!
 
-        hostsPerRack = 20
-        flowFile = "~/trafficGen/flows.csv"
-        scaleFactorSize = "1"
-        scaleFactorTime = "150"
-        participatory = "0"
-        participatorySleep = "0"
-        loop = "true"
-        config = "/tmp/traffGen.config"
-        ipBase = "10.0"
+            hostsPerRack = 20
+            flowFile = "~/trafficGen/flows.csv"
+            scaleFactorSize = "1"
+            scaleFactorTime = "150"
+            participatory = "0"
+            participatorySleep = "0"
+            loop = "true"
+            config = "/tmp/traffGen.config"
+            ipBase = "10.0"
 
-        for host in self.__experiment.hosts:
-          ip = host.IP()
-          ipAr = ip.split(".")
-          hostId = hostsPerRack * (int(ipAr[2]) - 1) + int(ipAr[3])
+            for host in self.__experiment.hosts:
+                # start traffic generator
+                ip = host.IP()
+                ipAr = ip.split(".")
+                hostId = hostsPerRack * (int(ipAr[2]) - 1) + int(ipAr[3])
 
-          traffgenCMD = "/home/schwabe/trafficGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %d \
-          --ipBase %s --hostId %s --flowFile %s --scaleFactorSize %s --scaleFactorTime %s \
-          --participatory %s --participatorySleep %s --loop %s --config %s &> /tmp/IP-%s-traff-Gen.log &" % (hostsPerRack, ipBase, hostId,flowFile,scaleFactorSize,scaleFactorTime,participatory,participatorySleep,loop,config,host.IP())
-          host.cmd(traffgenCMD)
+                traffgenCMD = "/home/schwabe/trafficGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %d \
+                --ipBase %s --hostId %s --flowFile %s --scaleFactorSize %s --scaleFactorTime %s \
+                --participatory %s --participatorySleep %s --loop %s --config %s &> /tmp/IP-%s-traff-Gen.log &" % (hostsPerRack, ipBase, hostId,flowFile,scaleFactorSize,scaleFactorTime,participatory,participatorySleep,loop,config,host.IP())
+                host.cmd(traffgenCMD)
 
-          host.cmd("/home/schwabe/trafficGen/trafficGenerator/trafficServer2/trafficServer2 &>/dev/null &")
+                host.cmd("/home/schwabe/trafficGen/trafficGenerator/trafficServer2/trafficServer2 &>/dev/null &")
 
-        #send start command to all traffGen processes.
-        time.sleep(10)
+                # setup transport api
+                configuration.get_transport_api().setup(host)
+
+            #send start command to all traffGen processes.
+            time.sleep(10)
 
 
-        #for host in self.__experiment.hosts:
-        #   print host.cmd("ping -c 3 10.0.0.1")
+            #for host in self.__experiment.hosts:
+            #   print host.cmd("ping -c 3 10.0.0.1")
 
-        #self.__experiment.CLI(locals(), globals())
-        
-        for w in self.__cluster.workers():
-            w.run_cmd("killall -s USR2 traffGen &")
+            #self.__experiment.CLI(locals(), globals())
+            
+            for w in self.__cluster.workers():
+                w.run_cmd("killall -s USR2 traffGen &")
 
-        result = {
-                "type" : "SIMULATION_STARTED",
-                "data" : {}
-                }
-        self.publisher.publish("DEFAULT", result)
+            result = {
+                    "type" : "SIMULATION_STARTED",
+                    "data" : {}
+                    }
+            self.publisher.publish("DEFAULT", result)
 
-        return True
-      except:
-        traceback.print_exc()
+            return True
+        except:
+            traceback.print_exc()
 
     @public
     def register_coflow(self, coflow_description):
@@ -226,9 +234,9 @@ class NetworkSimulator(object):
         Returns:
             transmission id of type integer (unique).
         """
-        mn_source = self.__experiment.get_node(
+        mn_source = self.__experiment.get_node( \
                 self.topology.get_mn_hostname(source))
-        mn_destination = self.__experiment.get_node(
+        mn_destination = self.__experiment.get_node( \
                 self.topology.get_mn_hostname(destination))
         transmission = Transmission(coflow_id, mn_source, mn_destination, \
                 n_bytes, subscription_key)
