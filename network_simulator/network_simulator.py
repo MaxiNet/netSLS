@@ -16,6 +16,7 @@ limitations under the License.
 
 import inspect
 import os.path
+import time
 import subprocess
 
 from MaxiNet.Frontend import maxinet
@@ -121,11 +122,11 @@ class NetworkSimulator(object):
 
         #start traffGen on all emulated Hosts!
 
-        hostsPerRack = "20"
-        flowFile = "~/traffGen/flows.csv"
+        hostsPerRack = 20
+        flowFile = "~/trafficGen/flows.csv"
         scaleFactorSize = "1"
         scaleFactorTime = "150"
-        participatory = "false"
+        participatory = "0"
         participatorySleep = "0"
         loop = "true"
         config = "/tmp/traffGen.config"
@@ -134,17 +135,28 @@ class NetworkSimulator(object):
         for host in self.__experiment.hosts:
             ip = host.IP()
             ipAr = ip.split(".")
-            hostId = int(hostsPerRack) * (int(ipAr[2]) - 1) + int(ipAr[3])
+            hostId = hostsPerRack * (int(ipAr[2]) - 1) + int(ipAr[3])
 
-            host.cmd("~/traffGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %d \
+            traffgenCMD = "/home/schwabe/trafficGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %d \
             --ipBase %s --hostId %s --flowFile %s --scaleFactorSize %s --scaleFactorTime %s \
-            --participatory %s --participatorySleep %s --loop %s --config %s &" % (hostsPerRack, ipBase, hostId,flowFile,scaleFactorSize,scaleFactorTime,participatory,participatorySleep,loop,config ))
+            --participatory %s --participatorySleep %s --loop %s --config %s > /tmp/IP-%s-traff-Gen.log &" % (hostsPerRack, ipBase, hostId,flowFile,scaleFactorSize,scaleFactorTime,participatory,participatorySleep,loop,config,host.IP())
+            host.cmd(traffgenCMD)
+
+            host.cmd("/home/schwabe/trafficGen/trafficGenerator/trafficServer2/trafficServer2 &")
 
         #send start command to all traffGen processes.
-        for w in self.__cluster.workers:
+        time.sleep(10)
+
+
+        #for host in self.__experiment.hosts:
+        #   print host.cmd("ping -c 3 10.0.0.1")
+
+        self.__experiment.CLI(locals(), globals())
+        
+        for w in self.__cluster.workers():
             w.run_cmd("killall -s USR2 traffGen &")
 
-
+        
 
 
         result = {
