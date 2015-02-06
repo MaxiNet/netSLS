@@ -28,16 +28,6 @@ def main():
         {"id":"rack2", "hosts":["host20", "host21"]}, \
         {"id":"rack3", "hosts":["host30", "host31"]}, \
         ]
-#    racks = [ \
-#        {"hosts":["a2117", "a2115", "a2118", "a2116"], "id":"defaultrack"} \
-#        ]
-    racks = [ \
-        {"id":"defaultrack0", "hosts":["host00", "host01"]}, \
-        {"id":"rack1", "hosts":["host10", "host11"]}, \
-        {"id":"rack2", "hosts":["host20", "host21"]}, \
-        {"id":"rack3", "hosts":["host30.avd.asdf.asdf.asdf",
-            "host31.asdf.ads.adsf"]}, \
-        ]
 
     topology = {
             "type" : "FatTree",
