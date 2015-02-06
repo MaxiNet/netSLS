@@ -84,16 +84,18 @@ class TransportTCP(TransportAPI):
 
     @classmethod
     def setup(cls, host):
+        return
         # start receiver
         ret = host.cmd("%s %i" % (cls._get_binary_path("tcp_receive"), \
                 configuration.get_tcp_receiver_port()))
-        if len(ret) != 0:
-            return False
+#        if len(ret) != 0:
+#            return False
 
         return True
 
     @classmethod
     def teardown(cls, host):
+        return
         # kill receiver
         host.cmd("pkill nc")
 
@@ -103,7 +105,7 @@ class TransportTCP(TransportAPI):
         destination_ip = topology.get_ip_address(destination.nn)
 
         # start sender
-        ret = destination.cmd("%s %s %i %i" % ( \
+        ret = source.cmd("%s %s %i %i" % ( \
                 cls._get_binary_path("tcp_send"), \
                 destination_ip, configuration.get_tcp_receiver_port(), n_bytes))
         if len(ret) != 0:

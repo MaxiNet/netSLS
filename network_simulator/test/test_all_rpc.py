@@ -56,11 +56,11 @@ def main():
     print
 
     print("== 4. Testing transmit_n_bytes ==")
-    transmission_id = remote_server.transmit_n_bytes(coflow_id, "host00", \
-        "host10", 1024*1024*1024, "SUB_KEY")
-    print("Returned transmission_id = %i" % transmission_id)
+    for i in range(0, 5):
+        transmission_id = remote_server.transmit_n_bytes(coflow_id, "host00", \
+            "host10", 20*1024*1024, "SUB_KEY")
+        print("Returned transmission_id = %i" % transmission_id)
+        print("[ZMQ] %s" % subscriber.recv().splitlines()[1])
 
-    print("[ZMQ] %s" % subscriber.recv().splitlines()[1])
-    
 if __name__ == "__main__":
     main()
