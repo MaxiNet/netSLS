@@ -162,7 +162,8 @@ public class ContainerSimulator implements Delayed {
         }
 
         try {
-          Integer transmissionId = nsClient.transmitNBytes(coflowId, source, destination, inputBytes, subscriptionKey);
+          Integer transmissionId = nsClient.transmitNBytes(coflowId, source, destination,
+              (long) (inputBytes / amSimulator.getAllMaps().size()), subscriptionKey);
           openTransmissions.add(transmissionId);
         } catch (Throwable t) {
           throw new RuntimeException(t);
