@@ -39,7 +39,7 @@ class RPCServer(object):
         transport = WsgiServerTransport(queue_class=gevent.queue.Queue)
 
         wsgi_server = gevent.wsgi.WSGIServer(('', \
-            configuration.get_rpc_server_port()), transport.handle)
+            configuration.get_rpc_server_port()), transport.handle, log=None)
         gevent.spawn(wsgi_server.serve_forever)
 
         self.__server = RPCServerGreenlets(

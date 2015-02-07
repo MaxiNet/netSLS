@@ -49,7 +49,7 @@ def get_rpc_server_port():
 
 def get_tcp_receiver_port():
     """Port used by netcat in transportTCP."""
-    return _CONFIG.get("TCPReceiverPort", 5502)
+    return _CONFIG.get("TCPReceiverPort", 13373)
 
 def get_transport_api():
     """Transport API class."""

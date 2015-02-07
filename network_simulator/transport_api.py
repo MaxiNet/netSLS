@@ -59,6 +59,14 @@ class TransportAPI(object):
         raise NotImplementedError()
 
     @classmethod
+    def setup_host(cls, host):
+        pass
+
+    @classmethod
+    def teardown(cls, host):
+        pass
+
+    @classmethod
     def _get_binary_path(cls, binary):
         """Returns path of binary on worker nodes.
 
@@ -75,18 +83,29 @@ class TransportTCP(TransportAPI):
     """
 
     @classmethod
+    def setup(cls, host):
+        return
+        # start receiver
+        ret = host.cmd("%s %i" % (cls._get_binary_path("tcp_receive"), \
+                configuration.get_tcp_receiver_port()))
+#        if len(ret) != 0:
+#            return False
+
+        return True
+
+    @classmethod
+    def teardown(cls, host):
+        return
+        # kill receiver
+        host.cmd("pkill nc")
+
+    @classmethod
     def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes):
         topology = network_simulator.NetworkSimulator.get_instance().topology
         destination_ip = topology.get_ip_address(destination.nn)
 
-        # start receiver
-        ret = destination.cmd("%s %i" % (cls._get_binary_path("tcp_receive"), \
-                configuration.get_tcp_receiver_port()))
-        if len(ret) != 0:
-            return False
-
         # start sender
-        ret = destination.cmd("%s %s %i %i" % ( \
+        ret = source.cmd("%s %s %i %i" % ( \
                 cls._get_binary_path("tcp_send"), \
                 destination_ip, configuration.get_tcp_receiver_port(), n_bytes))
         if len(ret) != 0:

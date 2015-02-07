@@ -32,13 +32,16 @@ def main():
     n_bytes = int(args.n_bytes)
     block_size = 1024 * 1024
     chunk = "x" * block_size
-    while n_bytes != 0:
+    while n_bytes > 0:
         if n_bytes < block_size:
             chunk = "x" * n_bytes
         sock.sendall(chunk)
         n_bytes -= len(chunk)
 
+    sock.sendall("1")
+    sock.recv(1)
     sock.close()
+    
 
 if __name__ == "__main__":
     main()
