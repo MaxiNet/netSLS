@@ -1,0 +1,39 @@
+{
+  "am.type" : "mapreduce",
+  "job.start.ms" : 0,
+  "job.end.ms" : 95375,
+  "job.queue.name" : "sls_queue_1",
+  "job.id" : "job_1",
+  "job.user" : "default",
+  "job.tasks" : [ {
+    "container.host" : "/default-rack/node1",
+    "container.start.ms" : 1000,
+    "container.end.ms" : 6000,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 100000000,
+    "container.outputBytes" : 100000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node1",
+    "container.start.ms" : 1200,
+    "container.end.ms" : 8000,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 100000000,
+    "container.outputBytes" : 100000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node1",
+    "container.start.ms" : 20000,
+    "container.end.ms" : 30000,
+    "container.priority" : 20,
+    "container.type" : "reduce",
+    "container.inputBytes" : 200000000,
+    "container.outputBytes" : 100000000
+  } ]
+}
