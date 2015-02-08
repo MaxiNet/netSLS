@@ -1,0 +1,212 @@
+{
+  "am.type" : "mapreduce",
+  "job.start.ms" : 0,
+  "job.end.ms" : 95375,
+  "job.queue.name" : "sls_queue_1",
+  "job.id" : "job_1",
+  "job.user" : "default",
+  "job.tasks" : [ {
+    "container.host" : "/default-rack/node1",
+    "container.start.ms" : 6664,
+    "container.end.ms" : 23707,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node2",
+    "container.start.ms" : 6665,
+    "container.end.ms" : 21593,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node3",
+    "container.start.ms" : 6669,
+    "container.end.ms" : 24500,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node4",
+    "container.start.ms" : 7000,
+    "container.end.ms" : 17000,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node1",
+    "container.start.ms" : 6664,
+    "container.end.ms" : 23707,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node1",
+    "container.start.ms" : 6664,
+    "container.end.ms" : 23707,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node2",
+    "container.start.ms" : 6665,
+    "container.end.ms" : 21593,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node3",
+    "container.start.ms" : 6669,
+    "container.end.ms" : 24500,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node4",
+    "container.start.ms" : 7000,
+    "container.end.ms" : 17000,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node1",
+    "container.start.ms" : 6664,
+    "container.end.ms" : 23707,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node2",
+    "container.start.ms" : 6665,
+    "container.end.ms" : 21593,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node3",
+    "container.start.ms" : 6669,
+    "container.end.ms" : 24500,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node4",
+    "container.start.ms" : 7000,
+    "container.end.ms" : 17000,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node1",
+    "container.start.ms" : 6664,
+    "container.end.ms" : 23707,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node2",
+    "container.start.ms" : 6665,
+    "container.end.ms" : 21593,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node3",
+    "container.start.ms" : 6669,
+    "container.end.ms" : 24500,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node4",
+    "container.start.ms" : 7000,
+    "container.end.ms" : 17000,
+    "container.priority" : 20,
+    "container.type" : "map",
+    "container.inputBytes" : 1000000,
+    "container.outputBytes" : 1000000,
+    "container.splitLocations" : [
+      "/default-rack/node1"
+    ]
+  }, {
+    "container.host" : "/default-rack/node2",
+    "container.start.ms" : 68770,
+    "container.end.ms" : 86613,
+    "container.priority" : 20,
+    "container.type" : "reduce",
+    "container.inputBytes" : 8000000,
+    "container.outputBytes" : 1000000
+  }, {
+    "container.host" : "/default-rack/node4",
+    "container.start.ms" : 68770,
+    "container.end.ms" : 86613,
+    "container.priority" : 20,
+    "container.type" : "reduce",
+    "container.inputBytes" : 8000000,
+    "container.outputBytes" : 1000000
+  } ]
+}

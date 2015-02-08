@@ -16,8 +16,6 @@ numPhysComp = 320
 durationMapTaskMs = 1000
 fileSizeBytes = 16 * int(1e6 *8)
 
-allJobs = dict()
-
 for i in range(0, numJobs):
 	
 	job = dict()
@@ -79,10 +77,10 @@ for i in range(0, numJobs):
 
 		job["job.tasks"].append(task)
 
-	allJobs[i] = job
 
-#write in json file
-print json.dumps(allJobs, indent=1, sort_keys=True)
+
+	#write in json file
+	print json.dumps(job, indent=1)
 
 
 

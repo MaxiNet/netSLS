@@ -79,5 +79,5 @@ public class SLSConfiguration {
   public static final String COMPLETED_TASKS_LOGGER_PATH = "completedtaskslogger.path";
   public static final String COMPLETED_TASKS_LOGGER_PATH_DEFAULT = "/tmp/sls_tasksPerSec.txt";
   public static final String COMPLETED_TASKS_LOGGER_INTERVAL = "completedtaskslogger.interval";
-  public static final long COMPLETED_TASKS_LOGGER_INTERVAL_DEFAULT = 1000;
+  public static final long COMPLETED_TASKS_LOGGER_INTERVAL_DEFAULT = 5000;
 }
