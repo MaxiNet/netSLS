@@ -53,7 +53,7 @@ public class CompletedTasksLogger implements Runnable {
         // Reopen to truncate file
         fw = new PrintWriter(logFile);
         synchronized (counter) {
-          fw.print(this.counter);
+          fw.print(this.counter / (this.interval / 1000.0));  //wir geben completedTasks/s aus.
           this.counter = 0;
         }
         fw.close();
