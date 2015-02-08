@@ -56,6 +56,7 @@ class TransmissionManager(threading.Thread):
                         if pid in self.new_transmissions[worker]:
                             self.new_transmissions[worker][pid].stop( \
                                     transmission.Transmission.SUCCESSFUL)
+                            del self.new_transmissions[worker][pid]
                         elif pid in self.open_transmissions[worker]:
                             self.open_transmissions[worker][pid].stop( \
                                     transmission.Transmission.SUCCESSFUL)
