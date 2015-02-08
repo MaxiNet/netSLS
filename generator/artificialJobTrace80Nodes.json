@@ -1,0 +1,790 @@
+{
+ "job.end.ms": "10000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-3/node76"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node76", 
+   "container.type": "map", 
+   "container.inputBytes": "3885206", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "11194745", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-0/node9"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node9", 
+   "container.type": "map", 
+   "container.inputBytes": "30713274", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "8995118", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node35"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node35", 
+   "container.type": "map", 
+   "container.inputBytes": "15606669", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "27198250", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node30"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node30", 
+   "container.type": "map", 
+   "container.inputBytes": "23308599", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "18291754", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node30"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node30", 
+   "container.type": "map", 
+   "container.inputBytes": "21707066", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "1830422", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-3/node75", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "0", 
+ "job.user": "default", 
+ "job.id": "job_0", 
+ "job.queue.name": "sls_queue_1"
+}
+{
+ "job.end.ms": "11000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-0/node8"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node8", 
+   "container.type": "map", 
+   "container.inputBytes": "26945559", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "16315812", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-0/node13"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node13", 
+   "container.type": "map", 
+   "container.inputBytes": "16043476", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "19225440", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node59"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node59", 
+   "container.type": "map", 
+   "container.inputBytes": "25927555", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "15964574", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node59"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node59", 
+   "container.type": "map", 
+   "container.inputBytes": "28095343", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "19860461", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node65"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node65", 
+   "container.type": "map", 
+   "container.inputBytes": "5447661", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "24634951", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-0/node7", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "1000", 
+ "job.user": "default", 
+ "job.id": "job_1", 
+ "job.queue.name": "sls_queue_1"
+}
+{
+ "job.end.ms": "12000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-0/node12"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node12", 
+   "container.type": "map", 
+   "container.inputBytes": "25603751", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "1906622", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-0/node6"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node6", 
+   "container.type": "map", 
+   "container.inputBytes": "18597757", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "15619446", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node50"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node50", 
+   "container.type": "map", 
+   "container.inputBytes": "15120490", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "15550234", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node46"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node46", 
+   "container.type": "map", 
+   "container.inputBytes": "6981953", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "2961993", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node74"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node74", 
+   "container.type": "map", 
+   "container.inputBytes": "13726124", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "427632", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-0/node12", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "2000", 
+ "job.user": "default", 
+ "job.id": "job_2", 
+ "job.queue.name": "sls_queue_1"
+}
+{
+ "job.end.ms": "13000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-0/node19"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node19", 
+   "container.type": "map", 
+   "container.inputBytes": "4422997", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "16134191", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node37"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node37", 
+   "container.type": "map", 
+   "container.inputBytes": "22418482", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "22429751", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node41"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node41", 
+   "container.type": "map", 
+   "container.inputBytes": "11784347", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "14763563", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node69"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node69", 
+   "container.type": "map", 
+   "container.inputBytes": "18473942", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "4409372", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node42"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node42", 
+   "container.type": "map", 
+   "container.inputBytes": "14174915", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "18257933", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-1/node36", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "3000", 
+ "job.user": "default", 
+ "job.id": "job_3", 
+ "job.queue.name": "sls_queue_1"
+}
+{
+ "job.end.ms": "14000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-2/node45"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node45", 
+   "container.type": "map", 
+   "container.inputBytes": "11482812", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "29477865", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-0/node3"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node3", 
+   "container.type": "map", 
+   "container.inputBytes": "28505085", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "27178929", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node20"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node20", 
+   "container.type": "map", 
+   "container.inputBytes": "7142436", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "3641856", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node58"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node58", 
+   "container.type": "map", 
+   "container.inputBytes": "30325119", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "21801446", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node70"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node70", 
+   "container.type": "map", 
+   "container.inputBytes": "2930177", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "14146269", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-1/node27", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "4000", 
+ "job.user": "default", 
+ "job.id": "job_4", 
+ "job.queue.name": "sls_queue_1"
+}
+{
+ "job.end.ms": "15000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-3/node74"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node74", 
+   "container.type": "map", 
+   "container.inputBytes": "7832825", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "24562447", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node61"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node61", 
+   "container.type": "map", 
+   "container.inputBytes": "12617919", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "29729678", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node24"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node24", 
+   "container.type": "map", 
+   "container.inputBytes": "3191284", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "3285609", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node71"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node71", 
+   "container.type": "map", 
+   "container.inputBytes": "15742781", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "24741810", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node22"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node22", 
+   "container.type": "map", 
+   "container.inputBytes": "18247636", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "5649943", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-3/node61", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "5000", 
+ "job.user": "default", 
+ "job.id": "job_5", 
+ "job.queue.name": "sls_queue_1"
+}
+{
+ "job.end.ms": "16000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-2/node46"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node46", 
+   "container.type": "map", 
+   "container.inputBytes": "3238349", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "20277498", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node33"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node33", 
+   "container.type": "map", 
+   "container.inputBytes": "2146350", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "30118415", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node76"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node76", 
+   "container.type": "map", 
+   "container.inputBytes": "22853232", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "17885829", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-0/node13"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node13", 
+   "container.type": "map", 
+   "container.inputBytes": "128984", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "17912481", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-0/node6"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node6", 
+   "container.type": "map", 
+   "container.inputBytes": "5326809", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "14358776", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-3/node61", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "6000", 
+ "job.user": "default", 
+ "job.id": "job_6", 
+ "job.queue.name": "sls_queue_1"
+}
+{
+ "job.end.ms": "17000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-3/node70"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node70", 
+   "container.type": "map", 
+   "container.inputBytes": "1188012", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "14901727", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-0/node10"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-0/node10", 
+   "container.type": "map", 
+   "container.inputBytes": "19449145", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "20058590", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node50"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node50", 
+   "container.type": "map", 
+   "container.inputBytes": "206054", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "20498948", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node65"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node65", 
+   "container.type": "map", 
+   "container.inputBytes": "5146285", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "13566094", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node67"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node67", 
+   "container.type": "map", 
+   "container.inputBytes": "3985506", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "15872662", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-3/node75", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "7000", 
+ "job.user": "default", 
+ "job.id": "job_7", 
+ "job.queue.name": "sls_queue_1"
+}
+{
+ "job.end.ms": "18000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-2/node55"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node55", 
+   "container.type": "map", 
+   "container.inputBytes": "9467520", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "15395152", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node30"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node30", 
+   "container.type": "map", 
+   "container.inputBytes": "10412911", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "8073975", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node45"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node45", 
+   "container.type": "map", 
+   "container.inputBytes": "24392754", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "22191740", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node78"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node78", 
+   "container.type": "map", 
+   "container.inputBytes": "1092277", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "20860800", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node60"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node60", 
+   "container.type": "map", 
+   "container.inputBytes": "25804365", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "10043681", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-0/node15", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "8000", 
+ "job.user": "default", 
+ "job.id": "job_8", 
+ "job.queue.name": "sls_queue_1"
+}
+{
+ "job.end.ms": "19000", 
+ "job.tasks": [
+  {
+   "container.splitLocations": [
+    "/rack-3/node68"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node68", 
+   "container.type": "map", 
+   "container.inputBytes": "31733357", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "18769782", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-3/node75"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-3/node75", 
+   "container.type": "map", 
+   "container.inputBytes": "8173291", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "30519187", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node45"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node45", 
+   "container.type": "map", 
+   "container.inputBytes": "29489822", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "7257996", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-1/node35"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-1/node35", 
+   "container.type": "map", 
+   "container.inputBytes": "23045930", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "200051", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.splitLocations": [
+    "/rack-2/node43"
+   ], 
+   "container.priority": "20", 
+   "container.host": "/rack-2/node43", 
+   "container.type": "map", 
+   "container.inputBytes": "22028906", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "26670694", 
+   "container.end.ms": "1000"
+  }, 
+  {
+   "container.priority": "20", 
+   "container.host": "/rack-2/node46", 
+   "container.type": "reduce", 
+   "container.inputBytes": "160000000", 
+   "container.start.ms": "0", 
+   "container.outputBytes": "32000000", 
+   "container.end.ms": "1000"
+  }
+ ], 
+ "am.type": "mapreduce", 
+ "job.start.ms": "9000", 
+ "job.user": "default", 
+ "job.id": "job_9", 
+ "job.queue.name": "sls_queue_1"
+}
