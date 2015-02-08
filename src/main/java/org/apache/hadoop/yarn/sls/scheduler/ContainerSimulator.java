@@ -172,7 +172,7 @@ public class ContainerSimulator implements Delayed {
     }
 
     // If transmission does not complete or call back for some reason finish ContainerSimulator anyways.
-    this.endTime = System.currentTimeMillis() + this.lifeTime * 5;
+    this.endTime = System.currentTimeMillis() + this.lifeTime * 50;
   }
 
   /**
