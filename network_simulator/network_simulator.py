@@ -28,6 +28,7 @@ from publisher import Publisher
 from rpc_server import RPCServer
 import topology
 from transmission import Transmission
+from transmission_manager import TransmissionManager
 import transport_api
 
 import traceback
@@ -42,7 +43,7 @@ class NetworkSimulator(object):
     Attributes:
         publisher: ZeroMQ publisher to publish results asynchronously.
         rpc_server: RPCServer providing this interface.
-        __cluster: MaxiNet cluster.
+        cluster: MaxiNet cluster.
         __experiment: Currently running MaxiNet experiment.
         topology: Topology used by current MaxiNet experiment.
     """
@@ -53,15 +54,18 @@ class NetworkSimulator(object):
     def __init__(self):
         self.publisher = Publisher()
         self.rpc_server = RPCServer(self)
+        self.transmission_manager = TransmissionManager( \
+                configuration.get_transmission_manager_polling_interval())
 
-        self.__cluster = maxinet.Cluster()
+        self.cluster = maxinet.Cluster()
         self.__experiment = None
 
         self.topology = None
 
     def start(self):
         """Start the network simulator."""
-        self.__cluster.start()
+        self.cluster.start()
+        self.transmission_manager.start()
         # start serving rpc calls forever
         self.rpc_server.serve_forever()
 
@@ -91,7 +95,7 @@ class NetworkSimulator(object):
         """
         try:
             # Copy transport api executables onto workers
-            for worker in self.__cluster.worker:
+            for worker in self.cluster.worker:
                 dest_dir = transport_api.TransportAPI.REMOTE_TRANSPORT_BIN_PATH
                 rm_cmd = "ssh %s rm -rf %s" % (worker.hn(), dest_dir)
                 mkdir_cmd = "ssh %s mkdir -p %s" % (worker.hn(), \
@@ -101,6 +105,9 @@ class NetworkSimulator(object):
                 subprocess.check_output(rm_cmd.split())
                 subprocess.check_output(mkdir_cmd.split())
                 subprocess.check_output(copy_cmd.split())
+
+                kill_cmd = "ssh %s sudo pkill nc" % worker.hn()
+                subprocess.check_output(kill_cmd.split())
 
             # Create topology object
             topology_class = None
@@ -120,7 +127,8 @@ class NetworkSimulator(object):
                     # tear down transmission api
                     configuration.get_transport_api().teardown(host)
                 self.__experiment.stop()
-            self.__experiment = maxinet.Experiment(self.__cluster, \
+
+            self.__experiment = maxinet.Experiment(self.cluster, \
                     self.topology, switch=OVSSwitch)
             self.__experiment.setup()
 
@@ -153,15 +161,14 @@ class NetworkSimulator(object):
                 configuration.get_transport_api().setup(host)
 
             #send start command to all traffGen processes.
-            time.sleep(10)
+            time.sleep(5)
 
+#            for host in self.__experiment.hosts:
+#                print(host.cmd("ping -c 3 10.0.1.1"))
 
-            #for host in self.__experiment.hosts:
-            #   print host.cmd("ping -c 3 10.0.0.1")
-
-            #self.__experiment.CLI(locals(), globals())
+#            self.__experiment.CLI(locals(), globals())
             
-            for w in self.__cluster.workers():
+            for w in self.cluster.workers():
                 w.run_cmd("killall -s USR2 traffGen &")
 
             result = {
@@ -240,7 +247,7 @@ class NetworkSimulator(object):
                 self.topology.get_mn_hostname(destination))
         transmission = Transmission(coflow_id, mn_source, mn_destination, \
                 n_bytes, subscription_key)
-        transmission.start()
+        self.transmission_manager.start_transmission(transmission)
 
         return transmission.transmission_id
 

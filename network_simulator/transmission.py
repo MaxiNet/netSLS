@@ -21,8 +21,8 @@ import time
 import configuration
 import network_simulator
 
-class Transmission(threading.Thread):
-    """Thread that performs a transmission in MaxiNet.
+class Transmission(object):
+    """Performs a transmission in MaxiNet.
 
     An instance of this class is a thread that performs a transission in MaxiNet
     using the currently specified transmission API. After the transission is
@@ -37,6 +37,9 @@ class Transmission(threading.Thread):
         transmission_id: Unique integer identifying this transmission.
     """
 
+    SUCCESSFUL = "SUCCESSFUL"
+    FAILED = "FAILED"
+
     # Counts the number of transmission objects created.
     _COUNT = 0
 
@@ -45,7 +48,6 @@ class Transmission(threading.Thread):
 
     def __init__(self, coflow_id, source, destination, n_bytes, \
             subscription_key):
-        threading.Thread.__init__(self)
         self.coflow_id = coflow_id
         self.source = source
         self.destination = destination
@@ -56,14 +58,15 @@ class Transmission(threading.Thread):
             self.transmission_id = self.__class__._COUNT
             self.__class__._COUNT += 1
 
-    def run(self):
-        start_time = time.time()
-        transport_result = configuration.get_transport_api().transmit_n_bytes( \
+    def start(self):
+        self.start_time = time.time()
+        return configuration.get_transport_api().transmit_n_bytes( \
                 self.coflow_id, self.source, self.destination, self.n_bytes)
-        duration = time.time() - start_time
 
-        if transport_result == True:
-            result = {
+    def stop(self, result):
+        duration = time.time() - self.start_time
+        if result == Transmission.SUCCESSFUL:
+            result_string = {
                     "type" : "TRANSMISSION_SUCCESSFUL",
                     "data" : {
                         "transmission_id": self.transmission_id,
@@ -71,11 +74,11 @@ class Transmission(threading.Thread):
                         }
                     }
         else:
-            result = {
+            result_string = {
                     "type" : "TRANSMISSION_FAILED",
                     "data" : {
                         "transmission_id": self.transmission_id
                         }
                     }
         network_simulator.NetworkSimulator.get_instance().publisher.publish(
-                self.subscription_key, json.dumps(result))
+                self.subscription_key, json.dumps(result_string))

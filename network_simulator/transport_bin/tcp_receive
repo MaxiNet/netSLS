@@ -34,4 +34,4 @@ case ${PORT} in
   (*)              ;;
 esac
 
-nc -kl ${PORT} > /dev/null &
+nc -kl ${PORT}

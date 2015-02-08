@@ -54,7 +54,7 @@ class TransportAPI(object):
             subscription_key: Key under which the result will be published.
 
         Returns:
-            True on success, False otherwise.
+            PID of sending process (daemonized) or None on failure
         """
         raise NotImplementedError()
 
@@ -84,18 +84,18 @@ class TransportTCP(TransportAPI):
 
     @classmethod
     def setup(cls, host):
-        return
         # start receiver
-        ret = host.cmd("%s %i" % (cls._get_binary_path("tcp_receive"), \
-                configuration.get_tcp_receiver_port()))
-#        if len(ret) != 0:
-#            return False
+        receiver_cmd = "%s %i" % (cls._get_binary_path("tcp_receive"), \
+                configuration.get_tcp_receiver_port())
+        pid = host.cmd("%s %s" % (cls._get_binary_path("daemonize"),
+            receiver_cmd)).splitlines()[0]
+        if not pid.isdigit():
+            return False
 
         return True
 
     @classmethod
     def teardown(cls, host):
-        return
         # kill receiver
         host.cmd("pkill nc")
 
@@ -104,11 +104,14 @@ class TransportTCP(TransportAPI):
         topology = network_simulator.NetworkSimulator.get_instance().topology
         destination_ip = topology.get_ip_address(destination.nn)
 
-        # start sender
-        ret = source.cmd("%s %s %i %i" % ( \
-                cls._get_binary_path("tcp_send"), \
-                destination_ip, configuration.get_tcp_receiver_port(), n_bytes))
-        if len(ret) != 0:
-            return False
+        transmit_cmd = "%s %s %i %i" % (cls._get_binary_path("tcp_send"), \
+                destination_ip, configuration.get_tcp_receiver_port(), n_bytes)
 
-        return True
+        # start daemonized sende
+        pid = source.cmd("%s %s" % (cls._get_binary_path("daemonize"),
+            transmit_cmd)).splitlines()[0]
+
+        if not pid.isdigit():
+            return None
+
+        return int(pid)

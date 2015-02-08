@@ -1,4 +1,5 @@
 #! /usr/bin/python
+import threading
 import time
 
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
@@ -8,6 +9,37 @@ import zmq
 
 import topology
 HOST ="fgcn-of-20.cs.upb.de"
+HOST ="localhost"
+
+class Sender(threading.Thread):
+    count = 0
+
+    def __init__(self, zmq_context, source, destination, n_bytes):
+        threading.Thread.__init__(self)
+
+        self.key = "SENDER%i" % Sender.count
+        Sender.count += 1
+
+        self.subscriber = zmq_context.socket(zmq.SUB)
+        self.subscriber.connect("tcp://%s:5500" % HOST)
+        self.subscriber.setsockopt(zmq.SUBSCRIBE, self.key)
+
+        rpc_client = RPCClient(
+            JSONRPCProtocol(),
+            HttpPostClientTransport("http://%s:5501" % HOST)
+        )
+        self.remote_server = rpc_client.get_proxy()
+
+        self.source = source
+        self.destination = destination
+        self.n_bytes = n_bytes
+
+    def run(self):
+        transmission_id = self.remote_server.transmit_n_bytes("", self.source, \
+            self.destination, self.n_bytes, self.key)
+        print("%s: Returned transmission_id = %i" % (self.key, transmission_id))
+        print("%s: [ZMQ] %s" % (self.key, \
+            self.subscriber.recv().splitlines()[1]))
 
 def main():
     context = zmq.Context()
@@ -56,11 +88,20 @@ def main():
     print
 
     print("== 4. Testing transmit_n_bytes ==")
+#    for i in range(0, 5):
+#        transmission_id = remote_server.transmit_n_bytes(coflow_id, "host00", \
+#            "host10", 20*1024*1024, "SUB_KEY")
+#        print("Returned transmission_id = %i" % transmission_id)
+#        print("[ZMQ] %s" % subscriber.recv().splitlines()[1])
+    senders = list()
     for i in range(0, 5):
-        transmission_id = remote_server.transmit_n_bytes(coflow_id, "host00", \
-            "host10", 20*1024*1024, "SUB_KEY")
-        print("Returned transmission_id = %i" % transmission_id)
-        print("[ZMQ] %s" % subscriber.recv().splitlines()[1])
+        senders.append(Sender(context, "host00", "host01", 2 * 1024 * 1024))
+
+    for sender in senders:
+        sender.start()
+
+    for sender in senders:
+        sender.join()
 
 if __name__ == "__main__":
     main()

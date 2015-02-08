@@ -1,0 +1,13 @@
+#!/usr/bin/env python2
+
+import subprocess
+import sys
+
+def main():
+    command = sys.argv[1:]
+    pid = subprocess.Popen(command).pid
+
+    print(pid)
+
+if __name__ == "__main__":
+    main()
