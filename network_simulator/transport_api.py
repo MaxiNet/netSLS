@@ -84,6 +84,7 @@ class TransportTCP(TransportAPI):
 
     @classmethod
     def setup(cls, host):
+        return
         # start receiver
         receiver_cmd = "%s %i" % (cls._get_binary_path("tcp_receive"), \
                 configuration.get_tcp_receiver_port())
@@ -96,6 +97,7 @@ class TransportTCP(TransportAPI):
 
     @classmethod
     def teardown(cls, host):
+        return
         # kill receiver
         host.cmd("pkill nc")
 

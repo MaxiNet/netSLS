@@ -94,8 +94,9 @@ def main():
 #        print("Returned transmission_id = %i" % transmission_id)
 #        print("[ZMQ] %s" % subscriber.recv().splitlines()[1])
     senders = list()
-    for i in range(0, 5):
+    for i in range(0, 25):
         senders.append(Sender(context, "host00", "host01", 2 * 1024 * 1024))
+        senders.append(Sender(context, "host20", "host21", 2 * 1024 * 1024))
 
     for sender in senders:
         sender.start()

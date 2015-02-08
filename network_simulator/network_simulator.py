@@ -106,8 +106,11 @@ class NetworkSimulator(object):
                 subprocess.check_output(mkdir_cmd.split())
                 subprocess.check_output(copy_cmd.split())
 
-                kill_cmd = "ssh %s sudo pkill nc" % worker.hn()
-                subprocess.check_output(kill_cmd.split())
+                try:
+                    kill_cmd = "ssh %s sudo pkill nc" % worker.hn()
+                    subprocess.check_output(kill_cmd.split())
+                except Exception:
+                    pass
 
             # Create topology object
             topology_class = None
@@ -241,6 +244,7 @@ class NetworkSimulator(object):
         Returns:
             transmission id of type integer (unique).
         """
+        print("NS: transmit_n_bytes")
         mn_source = self.__experiment.get_node( \
                 self.topology.get_mn_hostname(source))
         mn_destination = self.__experiment.get_node( \

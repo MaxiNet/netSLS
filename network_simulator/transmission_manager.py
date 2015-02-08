@@ -24,7 +24,7 @@ class TransmissionManager(threading.Thread):
             for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
                 #print("TM: querying worker %s" % worker.hn())
                 # find all running senders
-                ps_cmd = "ssh %s pgrep -f %s" % (worker.hn(), "tcp_send")
+                ps_cmd = "sudo ssh %s pgrep -f %s" % (worker.hn(), "[t]cp_send")
                 running_senders = []
                 try:
                     running_senders = [int(x) for x in \

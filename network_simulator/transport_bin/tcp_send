@@ -39,8 +39,8 @@ def main():
         sock.sendall(chunk)
         n_bytes -= len(chunk)
 
-#    sock.sendall("1")
-#    sock.recv(1)
+    sock.sendall("1")
+    sock.recv(1)
     sock.close()
 
     with open("/tmp/completed_senders", "a") as f:
