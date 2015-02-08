@@ -194,7 +194,7 @@ class Clos(Topology):
                 end = len(racks)+1
 
             for i in range(start, end):
-                sw = racks[i]
+                sw = self.tor_switches[i]
                 self.addLink(p1, sw, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)
                 self.addLink(p2, sw, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)
 
