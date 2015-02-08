@@ -75,7 +75,7 @@ class TransmissionManager(threading.Thread):
             for worker in self.new_transmissions.keys():
                 for k, v in self.new_transmissions[worker].items():
                     self.open_transmissions[worker][k] = v
-                self.open_transmissions[worker] = dict()
+                self.new_transmissions[worker] = dict()
 
             time.sleep(self.interval)
 
