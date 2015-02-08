@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+
+<property>
+<name>topology.script.file.name</name> 
+<value>/Users/wette/promotion/forschung/netSLS/hadoop-2.5.2/etc/hadoop/rack-topology.sh</value>
+</property>
+<property> 
+<name>topology.script.number.args</name> 
+<value>1</value>
+</property>
+
+</configuration>
