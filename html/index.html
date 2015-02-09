@@ -17,7 +17,7 @@
 
 		var data_hadoop = [],
             data_beacon = [],
-            url_hadoop_datasource = "http://fgcn-of-20/hadoopData.cgi",
+            url_hadoop_datasource = "http://localhost:8000/sls_tasksPerSec.txt",
             url_beacon_datasource = "http://kermit.cs.upb.de:8080/wm/jsflowviz/json/throughput.do",
 			totalPoints = 300;
         
@@ -186,7 +186,7 @@
 
 	<div id="content">
 
-        Completed Jobs per Second (Hadoop)
+        Completed Jobs per Second (times 10) (Hadoop)
 		<div class="demo-container">
 			<div id="placeholder-hadoop" class="demo-placeholder"></div>
 		</div>
