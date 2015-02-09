@@ -51,7 +51,7 @@ public class SLSConfiguration {
   public static final String NM_MEMORY_MB = NM_PREFIX + "memory.mb";
   public static final int NM_MEMORY_MB_DEFAULT = 10240;
   public static final String NM_VCORES = NM_PREFIX + "vcores";
-  public static final int NM_VCORES_DEFAULT = 10;
+  public static final int NM_VCORES_DEFAULT = 4;
   public static final String NM_HEARTBEAT_INTERVAL_MS = NM_PREFIX
                                                   + "heartbeat.interval.ms";
   public static final int NM_HEARTBEAT_INTERVAL_MS_DEFAULT = 1000;
@@ -77,7 +77,7 @@ public class SLSConfiguration {
 
   // completed tasks logger
   public static final String COMPLETED_TASKS_LOGGER_PATH = "completedtaskslogger.path";
-  public static final String COMPLETED_TASKS_LOGGER_PATH_DEFAULT = "/tmp/sls_tasksPerSec.txt";
+  public static final String COMPLETED_TASKS_LOGGER_PATH_DEFAULT = "/tmp/sls/sls_tasksPerSec.txt";
   public static final String COMPLETED_TASKS_LOGGER_INTERVAL = "completedtaskslogger.interval";
-  public static final long COMPLETED_TASKS_LOGGER_INTERVAL_DEFAULT = 5000;
+  public static final long COMPLETED_TASKS_LOGGER_INTERVAL_DEFAULT = 1000;
 }

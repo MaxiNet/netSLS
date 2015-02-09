@@ -155,7 +155,7 @@ class Clos(Topology):
         Topology.__init__(self, racks)
 
         numCore = 2
-        podSize = 4
+        podSize = 2
         numPods = int(math.ceil(len(racks) / podSize))
 
         bw = 50
