@@ -81,8 +81,8 @@ class MiniNetRemote:
             self.doCMD(["hostname", 'pkill -SIGSTOP traffGen || true'])
         else:
             self.doCMD(
-                ["echo scaleFactorSize=%f > /tmp/hup.conf" % (args.intensity/5.0),
-               "cat /tmp/hup.conf",
+                ["echo scaleFactorSize=%f > /tmp/traffGen.config" % (args.intensity/5.0),
+               "cat /tmp/traffGen.config",
                "pkill --signal SIGCONT traffGen || true",
                "pkill --signal SIGHUP traffGen || true"
             ])
