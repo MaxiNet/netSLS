@@ -127,6 +127,10 @@ public class ContainerSimulator implements Delayed {
       if (! (amSim instanceof MRAMSimulator)) {
         continue;
       }
+      // If container not allocated yet
+      if (((MRAMSimulator) amSim).getAmContainer() == null) {
+        continue;
+      }
       if (((MRAMSimulator) amSim).getAmContainer().getId().getApplicationAttemptId().getApplicationId()
           .equals(applicationId)) {
         amSimulator = (MRAMSimulator) amSim;
