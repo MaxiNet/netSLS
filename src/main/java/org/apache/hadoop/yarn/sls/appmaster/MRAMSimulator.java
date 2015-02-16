@@ -149,6 +149,10 @@ public class MRAMSimulator extends AMSimulator {
   }
 
   private void registerCoflow() throws Exception {
+    if (! SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+      return;
+    }
+
     NetworkSimulatorClient nsClient = new NetworkSimulatorClient();
     try {
       coflowId = nsClient.registerCoflow();
@@ -158,6 +162,10 @@ public class MRAMSimulator extends AMSimulator {
   }
 
   private void unregisterCoflow() throws Exception {
+    if (! SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+      return;
+    }
+
     NetworkSimulatorClient nsClient = new NetworkSimulatorClient();
 
     if (coflowId == null) {

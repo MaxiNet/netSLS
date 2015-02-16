@@ -114,6 +114,11 @@ public class SLSRunner {
   private boolean isSLS;
 
   /**
+   * Determines whether network simulator is enabled.
+   */
+  private boolean networkSimulatorEnabled;
+
+  /**
    * ZMQ context for network simulator async callbacks.
    */
   private ZMQ.Context zmqContext;
@@ -166,6 +171,9 @@ public class SLSRunner {
       }
     }
 
+    this.networkSimulatorEnabled = conf.getBoolean(SLSConfiguration.NETWORKSIMULATOR_ENABLED,
+        SLSConfiguration.NETWORKSIMULATOR_ENABLED_DEFAULT);
+
     this.zmqContext = ZMQ.context(1);
 
     this.completedTasksLogger = new CompletedTasksLogger(
@@ -209,8 +217,10 @@ public class SLSRunner {
       nodes.add(nm.getNode());
     }
 
-    NetworkSimulatorClient nwClient = new NetworkSimulatorClient();
-    nwClient.startSimulation(new Topology(nodes));
+    if (isNetworkSimulatorEnabled()) {
+      NetworkSimulatorClient nwClient = new NetworkSimulatorClient();
+      nwClient.startSimulation(new Topology(nodes));
+    }
   }
   
   private void startRM() throws IOException, ClassNotFoundException {
@@ -553,6 +563,10 @@ public class SLSRunner {
 
   public Configuration getConf() {
     return conf;
+  }
+
+  public boolean isNetworkSimulatorEnabled() {
+    return networkSimulatorEnabled;
   }
 
   public static void main(String args[]) throws Throwable {

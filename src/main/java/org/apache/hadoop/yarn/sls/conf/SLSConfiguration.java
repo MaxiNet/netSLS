@@ -72,6 +72,8 @@ public class SLSConfiguration {
 
   // network simulator
   public static final String NETWORKSIMULATOR_PREFIX = PREFIX + "networksimulator.";
+  public static final String NETWORKSIMULATOR_ENABLED = NETWORKSIMULATOR_PREFIX + "enabled";
+  public static final boolean NETWORKSIMULATOR_ENABLED_DEFAULT = true;
   public static final String NETWORKSIMULATOR_RPC_URL = NETWORKSIMULATOR_PREFIX + "rpc.url";
   public static final String NETWORKSIMULATOR_ZMQ_URL = NETWORKSIMULATOR_PREFIX + "zmq.url";
 

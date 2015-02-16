@@ -120,6 +120,10 @@ public class ContainerSimulator implements Delayed {
    * respectively.
    */
   public void startTransmission(String subscriptionKey) {
+    if (! SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+      return;
+    }
+
     // TODO: move to separate function
     ApplicationId applicationId = assignedContainer.getId().getApplicationAttemptId().getApplicationId();
     MRAMSimulator amSimulator = null;

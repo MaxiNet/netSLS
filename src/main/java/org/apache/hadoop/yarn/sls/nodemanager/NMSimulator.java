@@ -124,9 +124,12 @@ public class NMSimulator extends TaskRunner.Task {
 
     // Setup zmq subscriber, subscribe to this node's
     subscriptionKey = this.node.getHostName();
-    zmqSubscriber = SLSRunner.getInstance().getZmqContext().socket(ZMQ.SUB);
-    zmqSubscriber.connect(SLSRunner.getInstance().getConf().get(SLSConfiguration.NETWORKSIMULATOR_ZMQ_URL));
-    zmqSubscriber.subscribe(subscriptionKey.getBytes());
+
+    if (SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+      zmqSubscriber = SLSRunner.getInstance().getZmqContext().socket(ZMQ.SUB);
+      zmqSubscriber.connect(SLSRunner.getInstance().getConf().get(SLSConfiguration.NETWORKSIMULATOR_ZMQ_URL));
+      zmqSubscriber.subscribe(subscriptionKey.getBytes());
+    }
   }
 
   @Override
@@ -137,23 +140,25 @@ public class NMSimulator extends TaskRunner.Task {
   @Override
   public void middleStep() throws Exception {
     // Check for completed transmissions
-    byte[] msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
-    while(msg != null) {
-      String message = new String(msg).split("\n")[1];
-      msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
+    if (SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+      byte[] msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
+      while (msg != null) {
+        String message = new String(msg).split("\n")[1];
+        msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
 
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode response = mapper.readTree(message);
-      if (! response.get("type").getTextValue().equals("TRANSMISSION_SUCCESSFUL")) {
-        continue;
-      }
-      Integer transmissionId = response.get("data").get("transmission_id").getIntValue();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode response = mapper.readTree(message);
+        if (!response.get("type").getTextValue().equals("TRANSMISSION_SUCCESSFUL")) {
+          continue;
+        }
+        Integer transmissionId = response.get("data").get("transmission_id").getIntValue();
 
-      LOG.info("Transmission complete. transmission_id: " + transmissionId
-          + ", duration: " + response.get("data").get("duration").getDoubleValue());
+        LOG.info("Transmission complete. transmission_id: " + transmissionId
+            + ", duration: " + response.get("data").get("duration").getDoubleValue());
 
-      for (ContainerSimulator cs : containersWaitingForTransmission) {
-        cs.notifyTransmissionCompleted(transmissionId);
+        for (ContainerSimulator cs : containersWaitingForTransmission) {
+          cs.notifyTransmissionCompleted(transmissionId);
+        }
       }
     }
 
@@ -168,7 +173,7 @@ public class NMSimulator extends TaskRunner.Task {
     containersWaitingForTransmission.removeAll(completed);
 
     // we check the lifetime for each running containers
-    ContainerSimulator cs = null;
+    ContainerSimulator cs;
     synchronized(completedContainerList) {
       while ((cs = containerQueue.poll()) != null) {
         runningContainers.remove(cs.getAssignedContainer().getId());
