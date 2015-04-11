@@ -33,6 +33,7 @@ import transport_api
 
 import traceback
 
+
 class NetworkSimulator(object):
     """Implementation of the network simulators public interface.
 
@@ -54,8 +55,8 @@ class NetworkSimulator(object):
     def __init__(self):
         self.publisher = Publisher()
         self.rpc_server = RPCServer(self)
-        self.transmission_manager = TransmissionManager( \
-                configuration.get_transmission_manager_polling_interval())
+        self.transmission_manager = TransmissionManager(
+            configuration.get_transmission_manager_polling_interval())
 
         self.cluster = maxinet.Cluster()
         self.__experiment = None
@@ -98,10 +99,10 @@ class NetworkSimulator(object):
             for worker in self.cluster.worker:
                 dest_dir = transport_api.TransportAPI.REMOTE_TRANSPORT_BIN_PATH
                 rm_cmd = "ssh %s rm -rf %s" % (worker.hn(), dest_dir)
-                mkdir_cmd = "ssh %s mkdir -p %s" % (worker.hn(), \
-                        os.path.dirname(dest_dir))
-                copy_cmd = "scp -r ./transport_bin %s:%s" % (worker.hn(), \
-                        dest_dir)
+                mkdir_cmd = "ssh %s mkdir -p %s" % (
+                    worker.hn(), os.path.dirname(dest_dir))
+                copy_cmd = "scp -r ./transport_bin %s:%s" % (
+                    worker.hn(), dest_dir)
                 subprocess.check_output(rm_cmd.split())
                 subprocess.check_output(mkdir_cmd.split())
                 subprocess.check_output(copy_cmd.split())
@@ -131,39 +132,42 @@ class NetworkSimulator(object):
                     configuration.get_transport_api().teardown(host)
                 self.__experiment.stop()
 
-            self.__experiment = maxinet.Experiment(self.cluster, \
-                    self.topology, switch=OVSSwitch)
+            self.__experiment = maxinet.Experiment(
+                self.cluster, self.topology, switch=OVSSwitch)
             self.__experiment.setup()
 
-            #start traffGen on all emulated Hosts!
+            # start traffGen on all emulated Hosts!
 
-            hostsPerRack = 20
-            flowFile = "~/trafficGen/flows.csv"
-            scaleFactorSize = "1"
-            scaleFactorTime = "150"
+            hosts_per_rack = 20
+            flow_file = "~/trafficGen/flows.csv"
+            scale_factor_size = "1"
+            scale_factor_time = "150"
             participatory = "0"
-            participatorySleep = "0"
+            participatory_sleep = "0"
             loop = "true"
             config = "/tmp/traffGen.config"
-            ipBase = "10.0"
+            ip_base = "10.0"
 
             for host in self.__experiment.hosts:
                 # start traffic generator
                 ip = host.IP()
-                ipAr = ip.split(".")
-                hostId = hostsPerRack * (int(ipAr[2]) - 1) + int(ipAr[3])
+                ip_ar = ip.split(".")
+                host_id = hosts_per_rack * (int(ip_ar[2]) - 1) + int(ip_ar[3])
 
-                traffgenCMD = "/home/schwabe/trafficGen/trafficGenerator/trafficGenerator/traffGen --hostsPerRack %d \
-                --ipBase %s --hostId %s --flowFile %s --scaleFactorSize %s --scaleFactorTime %s \
-                --participatory %s --participatorySleep %s --loop %s --config %s &> /tmp/IP-%s-traff-Gen.log &" % (hostsPerRack, ipBase, hostId,flowFile,scaleFactorSize,scaleFactorTime,participatory,participatorySleep,loop,config,host.IP())
-                host.cmd(traffgenCMD)
+                traffgen_cmd = "/home/schwabe/trafficGen/trafficGenerator/trafficGenerator/traffGen --hosts_per_rack %d \
+                --ip_base %s --host_id %s --flow_file %s --scale_factor_size %s --scale_factor_time %s \
+                --participatory %s --participatory_sleep %s --loop %s --config %s &> /tmp/IP-%s-traff-Gen.log &" % (
+                    hosts_per_rack, ip_base, host_id, flow_file,
+                    scale_factor_size, scale_factor_time, participatory,
+                    participatory_sleep, loop, config, host.IP())
+                host.cmd(traffgen_cmd)
 
                 host.cmd("/home/schwabe/trafficGen/trafficGenerator/trafficServer2/trafficServer2 &>/dev/null &")
 
                 # setup transport api
                 configuration.get_transport_api().setup(host)
 
-            #send start command to all traffGen processes.
+            # send start command to all traffGen processes.
             time.sleep(5)
 
 #            for host in self.__experiment.hosts:
@@ -175,9 +179,8 @@ class NetworkSimulator(object):
                 w.run_cmd("killall -s USR2 traffGen &")
 
             result = {
-                    "type" : "SIMULATION_STARTED",
-                    "data" : {}
-                    }
+                "type": "SIMULATION_STARTED",
+                "data": {}}
             self.publisher.publish("DEFAULT", result)
 
             return True
@@ -205,8 +208,8 @@ class NetworkSimulator(object):
         Returns:
             Coflow id of type string.
         """
-        return configuration.get_transport_api().register_coflow( \
-                coflow_description)
+        return configuration.get_transport_api().register_coflow(
+            coflow_description)
 
     @public
     def unregister_coflow(self, coflow_id):
@@ -221,17 +224,17 @@ class NetworkSimulator(object):
         Returns:
             True on success, False otherwise.
         """
-        return configuration.get_transport_api().unregister_coflow( \
-                coflow_id)
+        return configuration.get_transport_api().unregister_coflow(
+            coflow_id)
 
     @public
-    def transmit_n_bytes(self, coflow_id, source, destination, n_bytes, \
-            subscription_key):
+    def transmit_n_bytes(self, coflow_id, source, destination, n_bytes,
+                         subscription_key):
         """RPC: Transmit n bytes from source to destination
 
         Send n_bytes bytes from source to destination using the current
         transport API. The transmission belongs to the given coflow_id. The
-        result will be published asynchroneously under the given
+        result will be published asynchronously under the given
         subscription_key.
 
         Args:
@@ -245,12 +248,12 @@ class NetworkSimulator(object):
             transmission id of type integer (unique).
         """
         print("NS: transmit_n_bytes")
-        mn_source = self.__experiment.get_node( \
-                self.topology.get_mn_hostname(source))
-        mn_destination = self.__experiment.get_node( \
-                self.topology.get_mn_hostname(destination))
-        transmission = Transmission(coflow_id, mn_source, mn_destination, \
-                n_bytes, subscription_key)
+        mn_source = self.__experiment.get_node(
+            self.topology.get_mn_hostname(source))
+        mn_destination = self.__experiment.get_node(
+            self.topology.get_mn_hostname(destination))
+        transmission = Transmission(
+            coflow_id, mn_source, mn_destination, n_bytes, subscription_key)
         self.transmission_manager.start_transmission(transmission)
 
         return transmission.transmission_id

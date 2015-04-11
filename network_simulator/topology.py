@@ -14,11 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import random
-import re
 import math
 
 from mininet.topo import Topo as MiniNetTopology
+
 
 class Topology(MiniNetTopology):
     """Basis for all topologies in the network simulator.
@@ -42,15 +41,15 @@ class Topology(MiniNetTopology):
 
     qsize = 75
 
-
     dpid = 0
 
     @classmethod
-    def makeDPID(cls):
-        Topology.dpid = Topology.dpid + 1
+    def make_dpid(cls):
+        Topology.dpid += 1
         return "%x" % Topology.dpid
 
-    def make_host_ip(self, rack, host):
+    @classmethod
+    def make_host_ip(cls, rack, host):
         """Generates an IP address from rack number and host number.
 
         Args:
@@ -85,19 +84,28 @@ class Topology(MiniNetTopology):
         # Set up racks (ToRs, Hosts and links)
         rack_count = 1
         for rack in racks:
-            tor_switch = self.addSwitch("tor%i" % rack_count, dpid = Topology.makeDPID())
+            tor_switch = self.addSwitch(
+                "tor%i" % rack_count,
+                dpid=Topology.make_dpid())
             self.tor_switches.append(tor_switch)
 
             host_count = 1
             for hostname in rack["hosts"]:
                 host_ip = self.make_host_ip(rack_count, host_count)
-                mn_hostname = self.addHost("h%02i%02i" % (rack_count, host_count), \
-                        ip=host_ip)
+                mn_hostname = self.addHost(
+                    "h%02i%02i" % (rack_count, host_count),
+                    ip=host_ip)
                 self.__mn_hostname_to_ip_map[mn_hostname] = host_ip
                 self.__hostname_to_mn_hostname_map[hostname] = mn_hostname
 
-                self.addLink(mn_hostname, tor_switch, bw=Topology.edge_bandwidth_limit,
-                        delay=str(Topology.latency) + "ms",  use_tbf=False, enable_red=False, max_queue_size=Topology.qsize)
+                self.addLink(
+                    mn_hostname,
+                    tor_switch,
+                    bw=Topology.edge_bandwidth_limit,
+                    delay=str(Topology.latency) + "ms",
+                    use_tbf=False,
+                    enable_red=False,
+                    max_queue_size=Topology.qsize)
 
                 host_count += 1
 
@@ -105,13 +113,14 @@ class Topology(MiniNetTopology):
 
     def get_mn_hostname(self, hostname):
         """Returns MaxiNet hostname corresponding to hostname."""
-        #TODO log error if not found
+        # TODO log error if not found
         return self.__hostname_to_mn_hostname_map[hostname]
 
     def get_ip_address(self, mn_hostname):
         """Get IP address corresponding to MaxiNet hostname"""
-        #TODO log error if not found
+        # TODO log error if not found
         return self.__mn_hostname_to_ip_map[mn_hostname]
+
 
 class FatTree(Topology):
     """A fat tree topology.
@@ -124,39 +133,42 @@ class FatTree(Topology):
 
         switch_count = 1
         bandwidth = Topology.edge_bandwidth_limit
-        todo = self.tor_switches # nodes that have to be integrated into the tree
+        todo = self.tor_switches  # nodes that have to be integrated into the tree
         while len(todo) > 1:
             new_todo = []
             for i in range(0, len(todo), 2):
-                switch_id = switch_count * (256 * 256)
-                sw = self.addSwitch('s' + str(switch_count), dpid = Topology.makeDPID())
+                sw = self.addSwitch(
+                    's' + str(switch_count),
+                    dpid=Topology.make_dpid())
                 switch_count += 1
                 new_todo.append(sw)
 
-                self.addLink(todo[i], sw, bw=bandwidth, \
-                        delay="%ims" % Topology.latency)
+                self.addLink(
+                    todo[i],
+                    sw,
+                    bw=bandwidth,
+                    delay="%ims" % Topology.latency)
                 if len(todo) > (i + 1):
-                    self.addLink(todo[i + 1], sw, bandwidth=bandwidth, \
-                            delay="%ims" % Topology.latency)
+                    self.addLink(
+                        todo[i + 1],
+                        sw,
+                        bandwidth=bandwidth,
+                        delay="%ims" % Topology.latency)
 
             todo = new_todo
-            bandwidth = 2.0 * bandwidth
-
-
-
+            bandwidth *= 2.0
 
 
 class Clos(Topology):
-    """A Clos topology
+    """A Clos topology.
     """
-
 
     def __init__(self, racks):
         Topology.__init__(self, racks)
 
-        numCore = 2
-        podSize = 2
-        numPods = int(math.ceil(len(racks) / podSize))
+        num_core = 2
+        pod_size = 2
+        num_pods = int(math.ceil(len(racks) / pod_size))
 
         bw = 50
         lat = 0.05
@@ -167,42 +179,66 @@ class Clos(Topology):
 
         s = 1
 
-        todo = self.tor_switches # nodes that have to be integrated into the tree
-
-
-        #build core:
-        for c in range(numCore):
-            cs = self.addSwitch('s' + str(s), dpid=Topology.makeDPID())
-            s = s + 1
+        # build core:
+        for c in range(num_core):
+            cs = self.addSwitch('s' + str(s), dpid=Topology.make_dpid())
+            s += 1
             core.append(cs)
 
-
-        ### build Pods
-        for p in range(numPods):
-            p1 = self.addSwitch('s' + str(s), dpid=Topology.makeDPID())
-            s = s + 1
-            p2 = self.addSwitch('s' + str(s), dpid=Topology.makeDPID())
-            s = s + 1
+        # build Pods
+        for p in range(num_pods):
+            p1 = self.addSwitch('s' + str(s), dpid=Topology.make_dpid())
+            s += 1
+            p2 = self.addSwitch('s' + str(s), dpid=Topology.make_dpid())
+            s += 1
 
             pod.append(p1)
             pod.append(p2)
 
-            #wire tors to this pod:
-            start = p * podSize
-            end = (p+1) * podSize
+            # wire tors to this pod:
+            start = p * pod_size
+            end = (p+1) * pod_size
             if end > len(racks):
                 end = len(racks)+1
 
             for i in range(start, end):
                 sw = self.tor_switches[i]
-                self.addLink(p1, sw, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)
-                self.addLink(p2, sw, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)
+                self.addLink(
+                    p1,
+                    sw,
+                    bw=bw,
+                    delay=str(lat) + "ms",
+                    use_tbf=False,
+                    enable_red=False,
+                    max_queue_size=qsize)
+                self.addLink(
+                    p2,
+                    sw,
+                    bw=bw,
+                    delay=str(lat) + "ms",
+                    use_tbf=False,
+                    enable_red=False,
+                    max_queue_size=qsize)
 
-        ##wire core and pods:
-        if numCore > 0:
+        # wire core and pods:
+        if num_core > 0:
             for k, v in enumerate(pod):
-                #calculate the indices of the core switches:
-                i1 = (k * 2) % numCore
-                i2 = (k * 2 + 1) % numCore
-                self.addLink(core[i1], v, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)
-                self.addLink(core[i2], v, bw=bw, delay=str(lat) + "ms", use_tbf=False, enable_red=False, max_queue_size=qsize)
+                # calculate the indices of the core switches:
+                i1 = (k * 2) % num_core
+                i2 = (k * 2 + 1) % num_core
+                self.addLink(
+                    core[i1],
+                    v,
+                    bw=bw,
+                    delay=str(lat) + "ms",
+                    use_tbf=False,
+                    enable_red=False,
+                    max_queue_size=qsize)
+                self.addLink(
+                    core[i2],
+                    v,
+                    bw=bw,
+                    delay=str(lat) + "ms",
+                    use_tbf=False,
+                    enable_red=False,
+                    max_queue_size=qsize)

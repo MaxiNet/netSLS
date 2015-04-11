@@ -1,10 +1,26 @@
+"""
+Copyright 2015 Malte Splietker
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 import subprocess
 import threading
 import time
 
-import configuration
 import network_simulator
 import transmission
+
 
 class TransmissionManager(threading.Thread):
     def __init__(self, interval):
@@ -22,31 +38,33 @@ class TransmissionManager(threading.Thread):
 
         while True:
             for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
-                #print("TM: querying worker %s" % worker.hn())
+                # TODO log print("TM: querying worker %s" % worker.hn())
                 # find all running senders
                 ps_cmd = "sudo ssh %s pgrep -f %s" % (worker.hn(), "[t]cp_send")
                 running_senders = []
                 try:
-                    running_senders = [int(x) for x in \
-                            subprocess.check_output(ps_cmd.split()).split()]
+                    running_senders = [int(x) for x in
+                                       subprocess.check_output(ps_cmd.split()).split()]
                     print("TM: running senders:")
                     print(running_senders)
-                except Exception:
+                except subprocess.CalledProcessError:
+                    # TODO log error
                     # this possible, if pgrep result is empty
                     pass
 
                 # get list of successfully completed senders
                 completed_senders = ""
                 try:
-                    mv_cmd = "ssh %s sudo mv /tmp/completed_senders /tmp/completed_senders.0 &> /dev/null" \
-                            % worker.hn()
+                    mv_cmd = "ssh %s sudo mv /tmp/completed_senders /tmp/completed_senders.0 &> /dev/null"\
+                             % worker.hn()
                     subprocess.check_output(mv_cmd.split())
                     cat_cmd = "ssh %s cat /tmp/completed_senders.0" % worker.hn()
-                    completed_senders = [int(x) for x in \
-                            subprocess.check_output(cat_cmd.split()).split()]
+                    completed_senders = [int(x) for x in
+                                         subprocess.check_output(cat_cmd.split()).split()]
                     print("TM: completed senders")
                     print(completed_senders)
-                except Exception:
+                except subprocess.CalledProcessError:
+                    # TODO log error
                     # this possible, if file does not yet exist
                     pass
 
@@ -54,12 +72,12 @@ class TransmissionManager(threading.Thread):
                     # all successful transmissions
                     for pid in completed_senders:
                         if pid in self.new_transmissions[worker]:
-                            self.new_transmissions[worker][pid].stop( \
-                                    transmission.Transmission.SUCCESSFUL)
+                            self.new_transmissions[worker][pid].stop(
+                                transmission.Transmission.SUCCESSFUL)
                             del self.new_transmissions[worker][pid]
                         elif pid in self.open_transmissions[worker]:
-                            self.open_transmissions[worker][pid].stop( \
-                                    transmission.Transmission.SUCCESSFUL)
+                            self.open_transmissions[worker][pid].stop(
+                                transmission.Transmission.SUCCESSFUL)
                             del self.open_transmissions[worker][pid]
                         else:
                             print("TM: PID of completed transmission not found")
@@ -80,15 +98,15 @@ class TransmissionManager(threading.Thread):
 
             time.sleep(self.interval)
 
-    def start_transmission(self, transmission):
-        print("TM: start_transmission %i" % transmission.transmission_id)
-        pid = transmission.start()
+    def start_trans(self, trans):
+        print("TM: start_trans %i" % trans.trans_id)
+        pid = trans.start()
 
         if not pid:
-            print("TM: Error starting transmission")
+            print("TM: Error starting trans")
             return
 
         # store pid
-        with self.open_transmissions_lock:
-            worker = transmission.source.worker
-            self.new_transmissions[worker][pid] = transmission
+        with self.open_transs_lock:
+            worker = trans.source.worker
+            self.new_transs[worker][pid] = trans

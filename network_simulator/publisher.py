@@ -19,6 +19,7 @@ import zmq
 
 import configuration
 
+
 class Publisher(object):
     """ZeroMQ publisher to asynchronously publish results."""
     def __init__(self):

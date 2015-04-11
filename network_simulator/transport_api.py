@@ -15,10 +15,10 @@ limitations under the License.
 """
 
 import os.path
-import time
 
 import configuration
 import network_simulator
+
 
 class TransportAPI(object):
     """Transport API used by Transmission threads to handle coflows and send
@@ -35,7 +35,7 @@ class TransportAPI(object):
 
     @classmethod
     def unregister_coflow(cls, coflow_id):
-        """Unregister a coflow.
+        """Un-register a coflow.
 
         Returns:
             True on success, False otherwise.
@@ -75,6 +75,7 @@ class TransportAPI(object):
         """
         return os.path.join(cls.REMOTE_TRANSPORT_BIN_PATH, binary)
 
+
 class TransportTCP(TransportAPI):
     """TCP transport API.
 
@@ -84,11 +85,14 @@ class TransportTCP(TransportAPI):
 
     @classmethod
     def setup(cls, host):
+        # TODO re-enable once own receiver implemented
         return
         # start receiver
-        receiver_cmd = "%s %i" % (cls._get_binary_path("tcp_receive"), \
-                configuration.get_tcp_receiver_port())
-        pid = host.cmd("%s %s" % (cls._get_binary_path("daemonize"),
+        receiver_cmd = "%s %i" % (
+            cls._get_binary_path("tcp_receive"),
+            configuration.get_tcp_receiver_port())
+        pid = host.cmd("%s %s" % (
+            cls._get_binary_path("daemonize"),
             receiver_cmd)).splitlines()[0]
         if not pid.isdigit():
             return False
@@ -97,6 +101,7 @@ class TransportTCP(TransportAPI):
 
     @classmethod
     def teardown(cls, host):
+        # TODO re-enable once own receiver implemented
         return
         # kill receiver
         host.cmd("pkill nc")
@@ -106,12 +111,14 @@ class TransportTCP(TransportAPI):
         topology = network_simulator.NetworkSimulator.get_instance().topology
         destination_ip = topology.get_ip_address(destination.nn)
 
-        transmit_cmd = "%s %s %i %i" % (cls._get_binary_path("tcp_send"), \
-                destination_ip, configuration.get_tcp_receiver_port(), n_bytes)
+        transmit_cmd = "%s %s %i %i" % (cls._get_binary_path("tcp_send"),
+                                        destination_ip,
+                                        configuration.get_tcp_receiver_port(),
+                                        n_bytes)
 
-        # start daemonized sende
+        # start daemonized sender
         pid = source.cmd("%s %s" % (cls._get_binary_path("daemonize"),
-            transmit_cmd)).splitlines()[0]
+                                    transmit_cmd)).splitlines()[0]
 
         if not pid.isdigit():
             return None

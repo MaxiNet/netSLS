@@ -24,6 +24,7 @@ from tinyrpc.dispatch import RPCDispatcher
 
 import configuration
 
+
 class RPCServer(object):
     """Provides an interface via JSON-RPC.
 
@@ -38,8 +39,10 @@ class RPCServer(object):
         self.__dispatcher = RPCDispatcher()
         transport = WsgiServerTransport(queue_class=gevent.queue.Queue)
 
-        wsgi_server = gevent.wsgi.WSGIServer(('', \
-            configuration.get_rpc_server_port()), transport.handle, log=None)
+        wsgi_server = gevent.wsgi.WSGIServer(
+            ('', configuration.get_rpc_server_port()),
+            transport.handle,
+            log=None)
         gevent.spawn(wsgi_server.serve_forever)
 
         self.__server = RPCServerGreenlets(
