@@ -109,7 +109,7 @@ class NetworkSimulator(object):
 
                 try:
                     # TODO transport API independent cleanup
-                    kill_cmd = "ssh %s sudo killall nc" % worker.hn()
+                    kill_cmd = "ssh %s sudo killall tcp_receiver" % worker.hn()
                     subprocess.check_output(kill_cmd.split())
                 except Exception:
                     pass

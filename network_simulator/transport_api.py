@@ -93,6 +93,8 @@ class TransportTCP(TransportAPI):
             cls._get_binary_path("daemonize"),
             receiver_cmd)).splitlines()[0]
         if not pid.isdigit():
+            # TODO Log
+            print("Failed to start receiver")
             return False
 
         return True
@@ -100,7 +102,7 @@ class TransportTCP(TransportAPI):
     @classmethod
     def teardown(cls, host):
         # kill receiver
-        host.cmd("killall nc")
+        host.cmd("killall tcp_receive")
 
     @classmethod
     def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes):
