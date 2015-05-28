@@ -85,8 +85,6 @@ class TransportTCP(TransportAPI):
 
     @classmethod
     def setup(cls, host):
-        # TODO re-enable once own receiver implemented
-        return
         # start receiver
         receiver_cmd = "%s %i" % (
             cls._get_binary_path("tcp_receive"),
@@ -101,10 +99,8 @@ class TransportTCP(TransportAPI):
 
     @classmethod
     def teardown(cls, host):
-        # TODO re-enable once own receiver implemented
-        return
         # kill receiver
-        host.cmd("pkill nc")
+        host.cmd("killall nc")
 
     @classmethod
     def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes):

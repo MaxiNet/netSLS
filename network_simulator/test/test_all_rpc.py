@@ -1,13 +1,11 @@
 #! /usr/bin/python
 import threading
-import time
 
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc import RPCClient
 import zmq
 
-import topology
 HOST ="fgcn-of-20.cs.upb.de"
 HOST ="localhost"
 
@@ -35,11 +33,10 @@ class Sender(threading.Thread):
         self.n_bytes = n_bytes
 
     def run(self):
-        transmission_id = self.remote_server.transmit_n_bytes("", self.source, \
-            self.destination, self.n_bytes, self.key)
+        transmission_id = self.remote_server.transmit_n_bytes(
+            "", self.source, self.destination, self.n_bytes, self.key)
         print("%s: Returned transmission_id = %i" % (self.key, transmission_id))
-        print("%s: [ZMQ] %s" % (self.key, \
-            self.subscriber.recv().splitlines()[1]))
+        print("%s: [ZMQ] %s" % (self.key, self.subscriber.recv().splitlines()[1]))
 
 def main():
     context = zmq.Context()
@@ -88,15 +85,10 @@ def main():
     print
 
     print("== 4. Testing transmit_n_bytes ==")
-#    for i in range(0, 5):
-#        transmission_id = remote_server.transmit_n_bytes(coflow_id, "host00", \
-#            "host10", 20*1024*1024, "SUB_KEY")
-#        print("Returned transmission_id = %i" % transmission_id)
-#        print("[ZMQ] %s" % subscriber.recv().splitlines()[1])
     senders = list()
-    for i in range(0, 25):
-        senders.append(Sender(context, "host00", "host01", 2 * 1024 * 1024))
-        senders.append(Sender(context, "host20", "host21", 2 * 1024 * 1024))
+    for i in range(0, 1):
+        senders.append(Sender(context, "host00", "host01", 2))# * 1024 * 1024))
+        senders.append(Sender(context, "host20", "host21", 2))# * 1024 * 1024))
 
     for sender in senders:
         sender.start()

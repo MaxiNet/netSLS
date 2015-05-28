@@ -5,7 +5,7 @@ virtualenv --python=python2.7 env
 # Switch to env
 source $(pwd)/env/bin/activate
 
-pip install pyzmq tinyrpc gevent wsgiref
+pip install pyzmq tinyrpc gevent requests werkzeug wsgiref
 
 # install mininet
 cd /tmp

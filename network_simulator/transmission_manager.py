@@ -40,7 +40,7 @@ class TransmissionManager(threading.Thread):
             for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
                 # TODO log print("TM: querying worker %s" % worker.hn())
                 # find all running senders
-                ps_cmd = "sudo ssh %s pgrep -f %s" % (worker.hn(), "[t]cp_send")
+                ps_cmd = "ssh %s pgrep -f %s" % (worker.hn(), "[t]cp_send")
                 running_senders = []
                 try:
                     running_senders = [int(x) for x in
@@ -98,8 +98,8 @@ class TransmissionManager(threading.Thread):
 
             time.sleep(self.interval)
 
-    def start_trans(self, trans):
-        print("TM: start_trans %i" % trans.trans_id)
+    def start_transmission(self, trans):
+        print("TM: start_trans %i" % trans.transmission_id)
         pid = trans.start()
 
         if not pid:
@@ -107,6 +107,6 @@ class TransmissionManager(threading.Thread):
             return
 
         # store pid
-        with self.open_transs_lock:
+        with self.open_transmissions_lock:
             worker = trans.source.worker
-            self.new_transs[worker][pid] = trans
+            self.new_transmissions[worker][pid] = trans

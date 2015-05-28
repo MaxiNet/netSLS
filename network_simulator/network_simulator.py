@@ -65,7 +65,7 @@ class NetworkSimulator(object):
 
     def start(self):
         """Start the network simulator."""
-        self.cluster.start()
+        self.cluster.add_workers()
         self.transmission_manager.start()
         # start serving rpc calls forever
         self.rpc_server.serve_forever()
@@ -108,7 +108,8 @@ class NetworkSimulator(object):
                 subprocess.check_output(copy_cmd.split())
 
                 try:
-                    kill_cmd = "ssh %s sudo pkill nc" % worker.hn()
+                    # TODO transport API independent cleanup
+                    kill_cmd = "ssh %s sudo killall nc" % worker.hn()
                     subprocess.check_output(kill_cmd.split())
                 except Exception:
                     pass
