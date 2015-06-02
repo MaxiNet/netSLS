@@ -45,16 +45,14 @@ class TransmissionManager(threading.Thread):
 
         while not self._stop.isSet():
             for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
-                logger.debug("Querying worker {}".format(worker.hn()))
                 # find all running senders
                 ps_cmd = "ssh %s pgrep -f %s" % (worker.hn(), "[t]cp_send")
                 running_senders = []
                 try:
-                    running_senders = [int(x) for x in
-                                       subprocess.check_output(ps_cmd.split()).split()]
+                    result = subprocess.check_output(ps_cmd.split())
+                    running_senders = [int(x) for x in result.split()]
                     logger.debug("Running senders {}".format(str(running_senders)))
                 except subprocess.CalledProcessError:
-                    logger.error("Unable to get running senders from host {}".format(worker.hn()))
                     # this is possible, if pgrep result is empty
                     pass
 
@@ -69,7 +67,6 @@ class TransmissionManager(threading.Thread):
                                          subprocess.check_output(cat_cmd.split()).split()]
                     logger.debug("Completed senders {}".format(str(completed_senders)))
                 except subprocess.CalledProcessError:
-                    logger.error("Unable to get completed senders from host {}".format(worker.hn()))
                     # this possible, if file does not yet exist
                     pass
 
@@ -77,10 +74,14 @@ class TransmissionManager(threading.Thread):
                     # all successful transmissions
                     for pid in completed_senders:
                         if pid in self.new_transmissions[worker]:
+                            logger.info("Transmission {} completed".format(
+                                        self.new_transmissions[worker][pid].transmission_id))
                             self.new_transmissions[worker][pid].stop(
                                 transmission.Transmission.SUCCESSFUL)
                             del self.new_transmissions[worker][pid]
                         elif pid in self.open_transmissions[worker]:
+                            logger.info("Transmission {} completed".format(
+                                self.open_transmissions[worker][pid].transmission_id))
                             self.open_transmissions[worker][pid].stop(
                                 transmission.Transmission.SUCCESSFUL)
                             del self.open_transmissions[worker][pid]
@@ -104,7 +105,7 @@ class TransmissionManager(threading.Thread):
             time.sleep(self.interval)
 
     def start_transmission(self, trans):
-        logger.info("Starting transmission with id {}".format(trans.transmission_id))
+        logger.info("Transmission {} started".format(trans.transmission_id))
         pid = trans.start()
 
         if not pid:
