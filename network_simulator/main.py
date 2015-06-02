@@ -28,8 +28,15 @@ import signal
 
 logger = logging.getLogger(__name__)
 
+def sigint_handler(signum, frame):
+    """Signal handler for SIGINT."""
+    logger.debug("caught SIGINT")
+    simulator = network_simulator.NetworkSimulator.get_instance()
+    simulator.stop()
+
 def sigterm_handler(signum, frame):
-    logger.debug("SIGINT/SIGTERM caught")
+    """Signal handler for SIGTERM."""
+    logger.debug("caught SIGTERM")
     simulator = network_simulator.NetworkSimulator.get_instance()
     simulator.stop()
 
@@ -43,7 +50,7 @@ def main():
     configuration.read(args.config_path)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
-    signal.signal(signal.SIGINT, sigterm_handler)
+    signal.signal(signal.SIGINT, sigint_handler)
 
     simulator = network_simulator.NetworkSimulator.get_instance()
     simulator.start()

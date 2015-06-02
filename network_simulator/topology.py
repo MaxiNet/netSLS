@@ -47,6 +47,7 @@ class Topology(MiniNetTopology):
 
     @classmethod
     def make_dpid(cls):
+        """Generates the next dpid."""
         Topology.dpid += 1
         return "%x" % Topology.dpid
 

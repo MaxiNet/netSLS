@@ -63,11 +63,27 @@ class Transmission(object):
             self.__class__._COUNT += 1
 
     def start(self):
+        """Starts the transmission.
+
+        Invokes a start of the transmission according to the specified
+        transport API.
+
+        Returns:
+            PID of the sending  process.
+        """
         self.start_time = time.time()
         return configuration.get_transport_api().transmit_n_bytes(
             self.coflow_id, self.source, self.destination, self.n_bytes)
 
     def stop(self, result):
+        """Stops the transmission.
+
+        After the sending process has terminated, send the result to the RPC
+        subscriber.
+
+        Args:
+            result: Result from the terminated sending process.
+        """
         duration = time.time() - self.start_time
         if result == Transmission.SUCCESSFUL:
             result_string = {

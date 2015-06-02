@@ -22,6 +22,7 @@ import configuration
 
 class Publisher(object):
     """ZeroMQ publisher to asynchronously publish results."""
+
     def __init__(self):
         self.__context = zmq.Context()
         self.__socket = self.__context.socket(zmq.PUB)

@@ -25,6 +25,15 @@ import transmission
 logger = logging.getLogger(__name__)
 
 class TransmissionManager(threading.Thread):
+    """Thread for keeping track of open and completed transmissions.
+
+    Each transmission is a separate process on one of the workers. This thread
+    polls these workers for completed and failed transmissions.
+
+    Attributes:
+        interval: Polling interval in ms.
+    """
+
     def __init__(self, interval):
         threading.Thread.__init__(self)
 
@@ -89,11 +98,11 @@ class TransmissionManager(threading.Thread):
                             logger.error("PID of completed transmission not found")
 
                     # all unsuccessful transmissions
-                    for pid, tm in self.open_transmissions[worker].items():
+                    for pid, trans in self.open_transmissions[worker].items():
                         if pid in running_senders:
                             continue
                         logger.error("Transmission with PID {} failed".format(pid))
-                        tm.stop(transmission.Transmission.FAILED)
+                        trans.stop(transmission.Transmission.FAILED)
                         del self.open_transmissions[worker][pid]
 
             # move new transmissions to open transmissions
@@ -105,6 +114,13 @@ class TransmissionManager(threading.Thread):
             time.sleep(self.interval)
 
     def start_transmission(self, trans):
+        """Start a transmission.
+
+        Start the given Transmission and add it to the list of open transmissions.
+
+        Args:
+            trans: Transmission to start.
+        """
         logger.info("Transmission {} started".format(trans.transmission_id))
         pid = trans.start()
 

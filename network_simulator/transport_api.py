@@ -62,10 +62,20 @@ class TransportAPI(object):
 
     @classmethod
     def setup_host(cls, host):
+        """Perform setup on host when the simulation is started.
+
+        Args:
+            host: MaxiNet host to perform setup on.
+        """
         pass
 
     @classmethod
     def teardown(cls, host):
+        """Perform teardown on host when the simulation is stopped.
+
+        Args:
+            host: MaxiNet host to perform teardown on.
+        """
         pass
 
     @classmethod

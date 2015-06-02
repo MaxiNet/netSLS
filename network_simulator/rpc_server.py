@@ -37,7 +37,7 @@ class RPCServer(object):
     def __init__(self, interface):
         """
         Args:
-            interface: Interface to provide
+            interface: Interface to provide.
         """
         self.__dispatcher = RPCDispatcher()
         transport = WsgiServerTransport(queue_class=gevent.queue.Queue)
@@ -58,7 +58,7 @@ class RPCServer(object):
         self.__dispatcher.register_instance(interface, "")
 
     def serve_forever(self):
-        """Starts the rpc server and serves forever."""
+        """Starts the RPC server and serves forever."""
         logger.info("RPC server started listening on 0.0.0.0:{}".format(
             configuration.get_rpc_server_port()))
         try:
@@ -68,4 +68,5 @@ class RPCServer(object):
             pass
 
     def stop(self):
+        """Stops the RPC server."""
         self._wsgi_server.stop()
