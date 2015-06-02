@@ -20,7 +20,13 @@ from argparse import ArgumentParser
 
 import configuration
 import network_simulator
+import signal
 
+def sigterm_handler(signum, frame):
+    # TODO Log message
+    print("SIGTERM called")
+    simulator = network_simulator.NetworkSimulator.get_instance()
+    simulator.stop()
 
 def main():
     parser = ArgumentParser(
@@ -31,9 +37,11 @@ def main():
 
     configuration.read(args.config_path)
 
+    signal.signal(signal.SIGTERM, sigterm_handler)
+    signal.signal(signal.SIGINT, sigterm_handler)
+
     simulator = network_simulator.NetworkSimulator.get_instance()
     simulator.start()
 
 if __name__ == "__main__":
     main()
-

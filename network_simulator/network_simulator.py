@@ -70,6 +70,14 @@ class NetworkSimulator(object):
         # start serving rpc calls forever
         self.rpc_server.serve_forever()
 
+    def stop(self):
+        """Stop the network simulator."""
+        self.transmission_manager.stop()
+        self.rpc_server.stop()
+        if self.__experiment:
+            self.__experiment.stop()
+        self.cluster.remove_workers()
+
     @public
     def start_simulation(self, topo):
         """RPC: Start a new simulation.

@@ -39,11 +39,11 @@ class RPCServer(object):
         self.__dispatcher = RPCDispatcher()
         transport = WsgiServerTransport(queue_class=gevent.queue.Queue)
 
-        wsgi_server = gevent.wsgi.WSGIServer(
+        self._wsgi_server = gevent.wsgi.WSGIServer(
             ('', configuration.get_rpc_server_port()),
             transport.handle,
             log=None)
-        gevent.spawn(wsgi_server.serve_forever)
+        gevent.spawn(self._wsgi_server.serve_forever)
 
         self.__server = RPCServerGreenlets(
             transport,
@@ -58,5 +58,13 @@ class RPCServer(object):
 
     def serve_forever(self):
         """Starts the rpc server and serves forever."""
+        # TODO Log
         print("started rpc server")
-        self.__server.serve_forever()
+        try:
+            self.__server.serve_forever()
+        except gevent.hub.LoopExit:
+            # FIXME: Right now this exception seems to be expected in this situation. Maybe have another look...
+            pass
+
+    def stop(self):
+        self._wsgi_server.stop()

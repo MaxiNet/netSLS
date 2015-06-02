@@ -26,17 +26,22 @@ class TransmissionManager(threading.Thread):
     def __init__(self, interval):
         threading.Thread.__init__(self)
 
+        self._stop = threading.Event()
+
         self.interval = interval
         self.open_transmissions_lock = threading.Lock()
         self.open_transmissions = dict()
         self.new_transmissions = dict()
+
+    def stop(self):
+        self._stop.set()
 
     def run(self):
         for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
             self.open_transmissions[worker] = dict()
             self.new_transmissions[worker] = dict()
 
-        while True:
+        while not self._stop.isSet():
             for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
                 # TODO log print("TM: querying worker %s" % worker.hn())
                 # find all running senders
