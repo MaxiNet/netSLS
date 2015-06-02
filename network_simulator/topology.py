@@ -14,10 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 import math
 
 from mininet.topo import Topo as MiniNetTopology
 
+logger = logging.getLogger(__name__)
 
 class Topology(MiniNetTopology):
     """Basis for all topologies in the network simulator.
@@ -113,12 +115,14 @@ class Topology(MiniNetTopology):
 
     def get_mn_hostname(self, hostname):
         """Returns MaxiNet hostname corresponding to hostname."""
-        # TODO log error if not found
+        if not hostname in self.__hostname_to_mn_hostname_map:
+            logger.error("Unkown hostname {}".format(hostname))
         return self.__hostname_to_mn_hostname_map[hostname]
 
     def get_ip_address(self, mn_hostname):
         """Get IP address corresponding to MaxiNet hostname"""
-        # TODO log error if not found
+        if not mn_hostname in self.__mn_hostname_to_ip_map:
+            logger.error("Unkown MaxiNet hostname {}".format(mn_hostname))
         return self.__mn_hostname_to_ip_map[mn_hostname]
 
 

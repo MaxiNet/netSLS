@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+
 import gevent
 import gevent.wsgi
 import gevent.queue
@@ -24,6 +26,7 @@ from tinyrpc.dispatch import RPCDispatcher
 
 import configuration
 
+logger = logging.getLogger(__name__)
 
 class RPCServer(object):
     """Provides an interface via JSON-RPC.
@@ -51,15 +54,13 @@ class RPCServer(object):
             self.__dispatcher
         )
 
-        print("created rpc server with url", configuration.get_rpc_server_port())
-
         # register interface's public functions
         self.__dispatcher.register_instance(interface, "")
 
     def serve_forever(self):
         """Starts the rpc server and serves forever."""
-        # TODO Log
-        print("started rpc server")
+        logger.info("RPC server started listening on 0.0.0.0:{}".format(
+            configuration.get_rpc_server_port()))
         try:
             self.__server.serve_forever()
         except gevent.hub.LoopExit:

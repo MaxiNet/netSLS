@@ -16,15 +16,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+import logging.config
+logging.config.fileConfig("logging.cfg")
+
 from argparse import ArgumentParser
 
 import configuration
 import network_simulator
 import signal
 
+logger = logging.getLogger(__name__)
+
 def sigterm_handler(signum, frame):
-    # TODO Log message
-    print("SIGTERM called")
+    logger.debug("SIGINT/SIGTERM caught")
     simulator = network_simulator.NetworkSimulator.get_instance()
     simulator.stop()
 

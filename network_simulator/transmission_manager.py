@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 import subprocess
 import threading
 import time
@@ -21,6 +22,7 @@ import time
 import network_simulator
 import transmission
 
+logger = logging.getLogger(__name__)
 
 class TransmissionManager(threading.Thread):
     def __init__(self, interval):
@@ -43,18 +45,17 @@ class TransmissionManager(threading.Thread):
 
         while not self._stop.isSet():
             for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
-                # TODO log print("TM: querying worker %s" % worker.hn())
+                logger.debug("Querying worker {}".format(worker.hn()))
                 # find all running senders
                 ps_cmd = "ssh %s pgrep -f %s" % (worker.hn(), "[t]cp_send")
                 running_senders = []
                 try:
                     running_senders = [int(x) for x in
                                        subprocess.check_output(ps_cmd.split()).split()]
-                    print("TM: running senders:")
-                    print(running_senders)
+                    logger.debug("Running senders {}".format(str(running_senders)))
                 except subprocess.CalledProcessError:
-                    # TODO log error
-                    # this possible, if pgrep result is empty
+                    logger.error("Unable to get running senders from host {}".format(worker.hn()))
+                    # this is possible, if pgrep result is empty
                     pass
 
                 # get list of successfully completed senders
@@ -66,10 +67,9 @@ class TransmissionManager(threading.Thread):
                     cat_cmd = "ssh %s cat /tmp/completed_senders.0" % worker.hn()
                     completed_senders = [int(x) for x in
                                          subprocess.check_output(cat_cmd.split()).split()]
-                    print("TM: completed senders")
-                    print(completed_senders)
+                    logger.debug("Completed senders {}".format(str(completed_senders)))
                 except subprocess.CalledProcessError:
-                    # TODO log error
+                    logger.error("Unable to get completed senders from host {}".format(worker.hn()))
                     # this possible, if file does not yet exist
                     pass
 
@@ -85,13 +85,13 @@ class TransmissionManager(threading.Thread):
                                 transmission.Transmission.SUCCESSFUL)
                             del self.open_transmissions[worker][pid]
                         else:
-                            print("TM: PID of completed transmission not found")
+                            logger.error("PID of completed transmission not found")
 
                     # all unsuccessful transmissions
                     for pid, tm in self.open_transmissions[worker].items():
                         if pid in running_senders:
                             continue
-                        print("TM: transmission with pid %i failed" % pid)
+                        logger.error("Transmission with PID {} failed".format(pid))
                         tm.stop(transmission.Transmission.FAILED)
                         del self.open_transmissions[worker][pid]
 
@@ -104,11 +104,11 @@ class TransmissionManager(threading.Thread):
             time.sleep(self.interval)
 
     def start_transmission(self, trans):
-        print("TM: start_trans %i" % trans.transmission_id)
+        logger.info("Starting transmission with id {}".format(trans.transmission_id))
         pid = trans.start()
 
         if not pid:
-            print("TM: Error starting trans")
+            logger.error("Failed to start transmission with id {}".format(trans.transmission_id))
             return
 
         # store pid

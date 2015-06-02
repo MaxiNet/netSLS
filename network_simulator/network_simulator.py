@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 import inspect
+import json
+import logging
 import os.path
 import time
 import subprocess
@@ -33,6 +35,7 @@ import transport_api
 
 import traceback
 
+logger = logging.getLogger(__name__)
 
 class NetworkSimulator(object):
     """Implementation of the network simulators public interface.
@@ -102,6 +105,10 @@ class NetworkSimulator(object):
         Returns:
             True on success, False otherwise.
         """
+        logger.info("RPC function {} invoked".format(
+            self.start_simulation.__name__))
+        logger.debug("topology:\n{}".format(json.dumps(topo, indent=4)))
+
         try:
             # Copy transport api executables onto workers
             for worker in self.cluster.worker:
@@ -129,7 +136,8 @@ class NetworkSimulator(object):
                     topology_class = value
                     break
             if not topology_class:
-                print("ERROR: topology class \"%s\" not found." % topo["type"])
+                logger.error("topology class \"%{}\" not found.".format(
+                    topo["type"]))
                 return False
 
             self.topology = topology_class(**topo["arguments"])
@@ -217,6 +225,9 @@ class NetworkSimulator(object):
         Returns:
             Coflow id of type string.
         """
+        logger.info("RPC function {} invoked".format(
+            self.register_coflow.__name__))
+
         return configuration.get_transport_api().register_coflow(
             coflow_description)
 
@@ -233,6 +244,9 @@ class NetworkSimulator(object):
         Returns:
             True on success, False otherwise.
         """
+        logger.info("RPC function {} invoked".format(
+            self.unregister_coflow.__name__))
+
         return configuration.get_transport_api().unregister_coflow(
             coflow_id)
 
@@ -256,7 +270,11 @@ class NetworkSimulator(object):
         Returns:
             transmission id of type integer (unique).
         """
-        print("NS: transmit_n_bytes")
+        logger.info("RPC function {} invoked".format(
+            self.transmit_n_bytes.__name__))
+        logger.debug("coflow_id: {}, source: {}, destination: {}, n_bytes: {}, subscription_key: {}".format(
+            coflow_id, source, destination, n_bytes, subscription_key))
+
         mn_source = self.__experiment.get_node(
             self.topology.get_mn_hostname(source))
         mn_destination = self.__experiment.get_node(

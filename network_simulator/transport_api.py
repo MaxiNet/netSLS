@@ -14,11 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 import os.path
 
 import configuration
 import network_simulator
 
+logger = logging.getLogger(__name__)
 
 class TransportAPI(object):
     """Transport API used by Transmission threads to handle coflows and send
@@ -93,8 +95,7 @@ class TransportTCP(TransportAPI):
             cls._get_binary_path("daemonize"),
             receiver_cmd)).splitlines()[0]
         if not pid.isdigit():
-            # TODO Log
-            print("Failed to start receiver")
+            logger.error("Failed to start receiver")
             return False
 
         return True
