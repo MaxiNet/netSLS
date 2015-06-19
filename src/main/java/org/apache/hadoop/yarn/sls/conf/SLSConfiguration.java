@@ -20,10 +20,16 @@ package org.apache.hadoop.yarn.sls.conf;
 
 import org.apache.hadoop.classification.InterfaceAudience.Private;
 import org.apache.hadoop.classification.InterfaceStability.Unstable;
+import org.apache.hadoop.conf.Configuration;
+
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 @Private
 @Unstable
-public class SLSConfiguration {
+public class SLSConfiguration extends Configuration {
   // sls
   public static final String PREFIX = "yarn.sls.";
   // runner
@@ -71,15 +77,41 @@ public class SLSConfiguration {
   public static final int CONTAINER_VCORES_DEFAULT = 1;
 
   // network simulator
-  public static final String NETWORKSIMULATOR_PREFIX = PREFIX + "networksimulator.";
-  public static final String NETWORKSIMULATOR_ENABLED = NETWORKSIMULATOR_PREFIX + "enabled";
+  public static final String NETWORKSIMULATOR_ENABLED = "networksimulator.enabled";
   public static final boolean NETWORKSIMULATOR_ENABLED_DEFAULT = true;
-  public static final String NETWORKSIMULATOR_RPC_URL = NETWORKSIMULATOR_PREFIX + "rpc.url";
-  public static final String NETWORKSIMULATOR_ZMQ_URL = NETWORKSIMULATOR_PREFIX + "zmq.url";
+  public static final String NETWORKSIMULATOR_RPC_URL = "networksimulator.rpc.url";
+  public static final String NETWORKSIMULATOR_ZMQ_URL = "networksimulator.zmq.url";
 
   // completed tasks logger
   public static final String COMPLETED_TASKS_LOGGER_PATH = "completedtaskslogger.path";
   public static final String COMPLETED_TASKS_LOGGER_PATH_DEFAULT = "/tmp/sls/sls_tasksPerSec.txt";
   public static final String COMPLETED_TASKS_LOGGER_INTERVAL = "completedtaskslogger.interval";
   public static final long COMPLETED_TASKS_LOGGER_INTERVAL_DEFAULT = 1000;
+
+
+  public SLSConfiguration() throws MalformedURLException {
+    super(false);
+
+    URL configurationURL = getConfigurationURL();
+    // runner configuration
+    URLClassLoader configClassLoader = new URLClassLoader(new URL[] { configurationURL }, this.getClassLoader());
+    this.setClassLoader(configClassLoader);
+    this.addResource("sls-runner.xml");
+  }
+
+  private static URL getConfigurationURL() throws MalformedURLException {
+    String hadoopHome = System.getProperty("hadoop.home.dir");
+    if (hadoopHome == null) {
+      hadoopHome = System.getenv("HADOOP_PREFIX");
+    }
+
+    File configurationPath = new File(hadoopHome, "etc/hadoop");
+    if (! configurationPath.isDirectory()) {
+      throw new RuntimeException("Configuration directory " + configurationPath.toString() + " does not exist.");
+    }
+
+    URL configurationURL = configurationPath.toURI().toURL();
+
+    return configurationURL;
+  }
 }

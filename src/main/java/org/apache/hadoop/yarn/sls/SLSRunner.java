@@ -154,8 +154,7 @@ public class SLSRunner {
     amClassMap = new HashMap<String, Class>();
 
     // runner configuration
-    this.conf = new Configuration(false);
-    this.conf.addResource("sls-runner.xml");
+    this.conf = new SLSConfiguration();
     // runner
     int poolSize = conf.getInt(SLSConfiguration.RUNNER_POOL_SIZE,
                                 SLSConfiguration.RUNNER_POOL_SIZE_DEFAULT);
