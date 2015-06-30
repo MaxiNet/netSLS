@@ -4,7 +4,7 @@
   "job.end.ms" : 95375,
   "job.queue.name" : "sls_queue_1",
   "job.id" : "job_1",
-  "job.user" : "default",
+  "job.user" : "root",
   "job.tasks" : [ {
     "container.host" : "/default-rack/node1",
     "container.start.ms" : 1000,

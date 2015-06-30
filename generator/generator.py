@@ -26,7 +26,7 @@ for i in range(0, numJobs):
 	job["job.end.ms"]		= str(time + 10000);
 	job["job.queue.name"]	= "sls_queue_1";
 	job["job.id"]			= "job_%i" % i;
-	job["job.user"]			= "default";
+	job["job.user"]			= "root";
 	job["job.tasks"]		= list();
 
 	job_bytes = random.randint(1,2) * fileSizeBytes

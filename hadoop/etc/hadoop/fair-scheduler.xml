@@ -21,7 +21,7 @@
 -->
 
 <allocations>
-  <user name="jenkins">
+  <user name="root">
     <!-- Limit on running jobs for the user across all pools. If more
       jobs than this are submitted, only the first <maxRunningJobs> will
       be scheduled at any given time. Defaults to infinity or the
