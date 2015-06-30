@@ -9,7 +9,8 @@
     <version>1.0-SNAPSHOT</version>
     <name>Apache Hadoop Coflow Simulator</name>
     <description>A modified version of the Apache Hadoop Scheduler Load Simulator which simulates the network in
-        MaxiNet.</description>
+        MaxiNet.
+    </description>
 
     <properties>
         <hadoop-version>2.5.2</hadoop-version>
@@ -18,7 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common-project</artifactId>
+            <artifactId>hadoop-common</artifactId>
             <version>${hadoop-version}</version>
         </dependency>
         <dependency>

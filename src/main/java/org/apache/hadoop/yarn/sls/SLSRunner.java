@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.HashMap;
@@ -218,12 +220,20 @@ public class SLSRunner {
 
     if (isNetworkSimulatorEnabled()) {
       NetworkSimulatorClient nwClient = new NetworkSimulatorClient();
-      nwClient.startSimulation(new Topology(nodes));
+      if (! nwClient.startSimulation(new Topology(nodes))) {
+        throw new RuntimeException("RPC function start_simulation returned false");
+      }
     }
   }
   
   private void startRM() throws IOException, ClassNotFoundException {
     Configuration rmConf = new YarnConfiguration();
+
+    // Modify classpath
+    URL configurationURL = SLSUtils.getHadoopConfigurationPath();
+    URLClassLoader configClassLoader = new URLClassLoader(new URL[] { configurationURL }, rmConf.getClassLoader());
+    rmConf.setClassLoader(configClassLoader);
+
     String schedulerClass = rmConf.get(YarnConfiguration.RM_SCHEDULER);
     rmConf.set(SLSConfiguration.RM_SCHEDULER, schedulerClass);
     rmConf.set(YarnConfiguration.RM_SCHEDULER,

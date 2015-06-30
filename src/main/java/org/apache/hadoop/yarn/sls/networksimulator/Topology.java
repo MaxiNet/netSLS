@@ -25,7 +25,7 @@ import java.util.Set;
 public class Topology {
   private Map<String, Rack> racks;
 
-  private String type = "Clos";
+  private String type = "FatTree";
 
   public Topology(Set<RMNode> nodes) {
     racks = new HashMap<String, Rack>();

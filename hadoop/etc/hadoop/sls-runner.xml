@@ -21,7 +21,7 @@
     <name>yarn.sls.runner.pool.size</name>
     <value>100</value>
   </property>
-  
+
   <!-- Nodes configuration -->
   <property>
     <name>yarn.sls.nm.memory.mb</name>
@@ -80,11 +80,15 @@
 
   <!-- Networksimulator configuration -->
   <property>
+    <name>yarn.sls.networksimulator.enabled</name>
+    <value>true</value>
+  </property>
+  <property>
     <name>yarn.sls.networksimulator.zmq.url</name>
-    <value>tcp://131.234.121.37:5500</value>
+    <value>tcp://localhost:5500</value>
   </property>
   <property>
     <name>yarn.sls.networksimulator.rpc.url</name>
-    <value>http://131.234.121.37:5501</value>
+    <value>http://localhost:5501</value>
   </property>
 </configuration>

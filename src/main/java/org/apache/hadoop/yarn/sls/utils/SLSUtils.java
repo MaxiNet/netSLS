@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Map;
@@ -133,5 +135,27 @@ public class SLSUtils {
       input.close();
     }
     return nodeSet;
+  }
+
+  /**
+   * Get Hadoop configuration path from hadoop.home.dir or HADOOP_PREFIX.
+   *
+   * @return URL with Hadoop configuration path.
+   * @throws MalformedURLException
+   */
+  public static URL getHadoopConfigurationPath() throws MalformedURLException {
+    String hadoopHome = System.getProperty("hadoop.home.dir");
+    if (hadoopHome == null) {
+      hadoopHome = System.getenv("HADOOP_PREFIX");
+    }
+
+    File configurationPath = new File(hadoopHome, "etc/hadoop");
+    if (! configurationPath.isDirectory()) {
+      throw new RuntimeException("Configuration directory " + configurationPath.toString() + " does not exist.");
+    }
+
+    URL configurationURL = configurationPath.toURI().toURL();
+
+    return configurationURL;
   }
 }
