@@ -92,10 +92,6 @@ public class SLSConfiguration extends Configuration {
   public SLSConfiguration() throws MalformedURLException {
     super(false);
 
-    // Modify classpath and load resource
-    URL configurationURL = SLSUtils.getHadoopConfigurationPath();
-    URLClassLoader configClassLoader = new URLClassLoader(new URL[] { configurationURL }, this.getClassLoader());
-    this.setClassLoader(configClassLoader);
     this.addResource("sls-runner.xml");
   }
 

@@ -229,11 +229,6 @@ public class SLSRunner {
   private void startRM() throws IOException, ClassNotFoundException {
     Configuration rmConf = new YarnConfiguration();
 
-    // Modify classpath
-    URL configurationURL = SLSUtils.getHadoopConfigurationPath();
-    URLClassLoader configClassLoader = new URLClassLoader(new URL[] { configurationURL }, rmConf.getClassLoader());
-    rmConf.setClassLoader(configClassLoader);
-
     String schedulerClass = rmConf.get(YarnConfiguration.RM_SCHEDULER);
     rmConf.set(SLSConfiguration.RM_SCHEDULER, schedulerClass);
     rmConf.set(YarnConfiguration.RM_SCHEDULER,

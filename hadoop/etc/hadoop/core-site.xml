@@ -3,13 +3,13 @@
 
 <configuration>
 
-<property>
-<name>topology.script.file.name</name> 
-<value>/Users/wette/promotion/forschung/netSLS/hadoop-2.5.2/etc/hadoop/rack-topology.sh</value>
-</property>
-<property> 
-<name>topology.script.number.args</name> 
-<value>1</value>
-</property>
+    <property>
+        <name>topology.script.file.name</name>
+        <value>/home/msp/studium/prisma/develop/netSLS/hadoop/etc/hadoop/rack-topology.sh</value>
+    </property>
+    <property>
+        <name>topology.script.number.args</name>
+        <value>1</value>
+    </property>
 
 </configuration>
