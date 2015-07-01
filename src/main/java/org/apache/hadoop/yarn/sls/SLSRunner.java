@@ -21,8 +21,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.HashMap;
