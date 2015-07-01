@@ -108,7 +108,7 @@ public class SLSWebApp extends HttpServlet {
   public void start() throws Exception {
     // static files
     final ResourceHandler staticHandler = new ResourceHandler();
-    staticHandler.setResourceBase("html");
+    staticHandler.setResourceBase("src/main/resources/html");
 
     Handler handler = new AbstractHandler() {
       @Override
