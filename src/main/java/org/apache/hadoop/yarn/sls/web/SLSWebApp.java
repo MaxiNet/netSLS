@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,10 +34,10 @@ import org.apache.hadoop.classification.InterfaceAudience.Private;
 import org.apache.hadoop.classification.InterfaceStability.Unstable;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event
         .SchedulerEventType;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.eclipse.jetty.server.Request;
+import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.AbstractHandler;
+import org.mortbay.jetty.Request;
 
 import org.apache.hadoop.yarn.sls.SLSRunner;
 import org.apache.hadoop.yarn.sls.scheduler.FairSchedulerMetrics;
@@ -48,7 +47,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.mortbay.jetty.handler.ResourceHandler;
 
 @Private
 @Unstable
@@ -112,44 +111,37 @@ public class SLSWebApp extends HttpServlet {
     staticHandler.setResourceBase("html");
 
     Handler handler = new AbstractHandler() {
-
-
-      /*
       @Override
       public void handle(String target, HttpServletRequest request,
-          HttpServletResponse response, int dispatch) {
-        */
-      @Override
-      public void handle(String target, Request request, HttpServletRequest httpServletRequest,
-                         HttpServletResponse httpServletResponse) throws IOException, ServletException {
+                         HttpServletResponse response, int dispatch) {
         try{
           // timeunit
           int timeunit = 1000;   // second, divide millionsecond / 1000
           String timeunitLabel = "second";
-          if (httpServletRequest.getParameter("u")!= null &&
-                  httpServletRequest.getParameter("u").equalsIgnoreCase("m")) {
+          if (request.getParameter("u")!= null &&
+                  request.getParameter("u").equalsIgnoreCase("m")) {
             timeunit = 1000 * 60;
             timeunitLabel = "minute";
           }
 
           // http request
           if (target.equals("/")) {
-            printPageIndex(httpServletRequest, httpServletResponse);
+            printPageIndex(request, response);
           } else if (target.equals("/simulate")) {
-            printPageSimulate(httpServletRequest, httpServletResponse, timeunit, timeunitLabel);
+            printPageSimulate(request, response, timeunit, timeunitLabel);
           } else if (target.equals("/track")) {
-            printPageTrack(httpServletRequest, httpServletResponse, timeunit, timeunitLabel);
+            printPageTrack(request, response, timeunit, timeunitLabel);
           } else
-            // js/css httpServletRequest
+            // js/css request
             if (target.startsWith("/js") || target.startsWith("/css")) {
-              httpServletResponse.setCharacterEncoding("utf-8");
-              staticHandler.handle(target, request, httpServletRequest, httpServletResponse);
+              response.setCharacterEncoding("utf-8");
+              staticHandler.handle(target, request, response, dispatch);
             } else
-              // json httpServletRequest
+              // json request
               if (target.equals("/simulateMetrics")) {
-                printJsonMetrics(httpServletRequest, httpServletResponse);
+                printJsonMetrics(request, response);
               } else if (target.equals("/trackMetrics")) {
-                printJsonTrack(httpServletRequest, httpServletResponse);
+                printJsonTrack(request, response);
               }
         } catch (Exception e) {
           e.printStackTrace();
