@@ -58,7 +58,7 @@ class TransmissionManager(threading.Thread):
                 try:
                     successful_senders = self.__worker_get_pids_from_file(
                         worker,
-                        os.path.join(configuration.get_worker_log_dir(), "pids_successful"))
+                        os.path.join(configuration.get_worker_working_directory(), "pids_successful"))
                     logger.debug("Successful senders {!s}".format(successful_senders))
                 except subprocess.CalledProcessError:
                     # This possible, if file pids_successful does not yet exist
@@ -68,7 +68,7 @@ class TransmissionManager(threading.Thread):
                 try:
                     failed_senders = self.__worker_get_pids_from_file(
                         worker,
-                        os.path.join(configuration.get_worker_log_dir(), "pids_failed"))
+                        os.path.join(configuration.get_worker_working_directory(), "pids_failed"))
                     logger.debug("Failed senders {!s}".format(successful_senders))
                 except subprocess.CalledProcessError:
                     # This possible, if file pids_failed does not yet exist
@@ -79,7 +79,7 @@ class TransmissionManager(threading.Thread):
                     try:
                         logfile_content = self.__worker_get_file_content(
                             worker,
-                            os.path.join(configuration.get_worker_log_dir(), "processes", str(pid)))
+                            os.path.join(configuration.get_worker_working_directory(), "processes", str(pid)))
                         logfile_formatted = ""
                         for line in logfile_content.splitlines():
                             logfile_formatted += "\t\t%s\n" % line
@@ -111,7 +111,6 @@ class TransmissionManager(threading.Thread):
                                 transmission.Transmission.FAILED)
                         del self.open_transmissions[worker][pid]
 
-            print(self.open_transmissions.values())
             time.sleep(self.interval)
 
     def start_transmission(self, trans):
@@ -135,16 +134,43 @@ class TransmissionManager(threading.Thread):
             self.open_transmissions[worker][pid] = trans
 
     def __worker_get_pids_from_file(self, worker, path):
+        """Returns a list of PIDs listed in a file on the specified worker node.
+
+        Args:
+            worker: worker node to read the file on.
+            path: file containing PIDs.
+
+        Returns:
+            A list of PIDs specified in the file.
+        """
         self.__worker_rotate_file(worker, path)
         content = self.__worker_get_file_content(worker, "%s.0" % path)
 
         return [int(x) for x in content.split()]
 
-    def __worker_get_file_content(self, worker, path):
+    @staticmethod
+    def __worker_get_file_content(worker, path):
+        """Returns the content of a file on the specified worker node.
+
+        Args:
+            worker: worker node to read file on.
+            path: file to read.
+
+        Returns:
+            Content of the specified file.
+        """
         cat_cmd = "ssh {0} cat {1}".format( worker.hn(), path)
 
         return subprocess.check_output(cat_cmd.split())
 
-    def __worker_rotate_file(self, worker, path):
+    @staticmethod
+    def __worker_rotate_file(worker, path):
+        """Rotates a file on the specified worker node.
+
+        The "path" will be moved to "path.0".
+        Args:
+            worker: worker node rotate file on.
+            path: file to rotate.
+        """
         mv_cmd = "ssh {0} sudo mv {1} {1}.0 &> /dev/null".format(worker.hn(), path)
         subprocess.check_output(mv_cmd.split())

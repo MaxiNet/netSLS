@@ -27,9 +27,6 @@ class TransportAPI(object):
     coflow transmissions through MaxiNet.
     """
 
-    # The transport binaries are copied to this path on the worker nodes
-    REMOTE_TRANSPORT_BIN_PATH = "/tmp/transport_bin"
-
     @classmethod
     def register_coflow(cls, coflow_description):
         """Register a new coflow."""
@@ -79,13 +76,23 @@ class TransportAPI(object):
         pass
 
     @classmethod
+    def get_remote_transport_bin_path(cls):
+        """Returns path to transport binaries on worker nodes.
+
+        Returns:
+            Path to transport binaries on worker nodes.
+        """
+        return os.path.join(configuration.get_worker_working_directory(),
+                            "transport_bin")
+
+    @classmethod
     def _get_binary_path(cls, binary):
         """Returns path of binary on worker nodes.
 
         Returns:
             Path to binary on worker nodes.
         """
-        return os.path.join(cls.REMOTE_TRANSPORT_BIN_PATH, binary)
+        return os.path.join(cls.get_remote_transport_bin_path(), binary)
 
 
 class TransportTCP(TransportAPI):
@@ -103,7 +110,7 @@ class TransportTCP(TransportAPI):
             configuration.get_tcp_receiver_port())
         result = host.cmd("%s %s %s" % (
             cls._get_binary_path("daemonize"),
-            configuration.get_worker_log_dir(),
+            configuration.get_worker_working_directory(),
             receiver_cmd)).splitlines()
         if len(result) == 0 or len(result) > 1 or not result[0].isdigit():
             logger.error("Failed to start receiver")
@@ -131,7 +138,7 @@ class TransportTCP(TransportAPI):
         # start daemonized sender
         pid = source.cmd("%s %s %s" % (
             cls._get_binary_path("daemonize"),
-            configuration.get_worker_log_dir(),
+            configuration.get_worker_working_directory(),
             transmit_cmd)).splitlines()[0]
 
         if not pid.isdigit():

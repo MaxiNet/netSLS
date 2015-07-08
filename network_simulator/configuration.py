@@ -69,6 +69,6 @@ def get_transport_api():
     return None
 
 
-def get_worker_log_dir():
-    """Get logging directory on MaxiNet workers."""
+def get_worker_working_directory():
+    """Get working directory on MaxiNet workers."""
     return _CONFIG.get("WorkerLogDir", "/tmp/netSLS")

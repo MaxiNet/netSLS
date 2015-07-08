@@ -42,7 +42,7 @@ class NetworkSimulator(object):
 
     This class implements the public interface made available through the RPC
     server.
-    This class is singleton. The instance is accessable throught get_instance().
+    This class is singleton. The instance is accessible through get_instance().
 
     Attributes:
         publisher: ZeroMQ publisher to publish results asynchronously.
@@ -112,15 +112,17 @@ class NetworkSimulator(object):
         try:
             # Copy transport api executables onto workers
             for worker in self.cluster.worker:
-                dest_dir = transport_api.TransportAPI.REMOTE_TRANSPORT_BIN_PATH
-                rm_cmd = "ssh %s rm -rf %s" % (worker.hn(), dest_dir)
-                mkdir_cmd = "ssh %s mkdir -p %s" % (
+                dest_dir = transport_api.TransportAPI.get_remote_transport_bin_path()
+                rm_cmd = "ssh %s sudo rm -rf %s" % (worker.hn(), dest_dir)
+                mkdir_cmd = "ssh %s sudo mkdir -p %s" % (
                     worker.hn(), os.path.dirname(dest_dir))
-                copy_cmd = "scp -r ./transport_bin %s:%s" % (
+                copy_cmd = "scp -r ./transport_bin %s:" % (worker.hn())
+                mv_cmd = "ssh %s sudo mv transport_bin %s" % (
                     worker.hn(), dest_dir)
                 subprocess.check_output(rm_cmd.split())
                 subprocess.check_output(mkdir_cmd.split())
                 subprocess.check_output(copy_cmd.split())
+                subprocess.check_output(mv_cmd.split())
 
                 try:
                     # TODO transport API independent cleanup
