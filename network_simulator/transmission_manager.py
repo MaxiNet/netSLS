@@ -15,10 +15,12 @@ limitations under the License.
 """
 
 import logging
+import os.path
 import subprocess
 import threading
 import time
 
+import configuration
 import network_simulator
 import transmission
 
@@ -42,7 +44,6 @@ class TransmissionManager(threading.Thread):
         self.interval = interval
         self.open_transmissions_lock = threading.Lock()
         self.open_transmissions = dict()
-        self.new_transmissions = dict()
 
     def stop(self):
         self._stop.set()
@@ -50,67 +51,67 @@ class TransmissionManager(threading.Thread):
     def run(self):
         for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
             self.open_transmissions[worker] = dict()
-            self.new_transmissions[worker] = dict()
 
         while not self._stop.isSet():
             for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
-                # find all running senders
-                ps_cmd = "ssh %s pgrep -f %s" % (worker.hn(), "[t]cp_send")
-                running_senders = []
+                successful_senders = []
                 try:
-                    result = subprocess.check_output(ps_cmd.split())
-                    running_senders = [int(x) for x in result.split()]
-                    logger.debug("Running senders {}".format(str(running_senders)))
+                    successful_senders = self.__worker_get_pids_from_file(
+                        worker,
+                        os.path.join(configuration.get_worker_log_dir(), "pids_successful"))
+                    logger.debug("Successful senders {!s}".format(successful_senders))
                 except subprocess.CalledProcessError:
-                    # this is possible, if pgrep result is empty
+                    # This possible, if file pids_successful does not yet exist
                     pass
 
-                # get list of successfully completed senders
-                completed_senders = ""
+                failed_senders = []
                 try:
-                    mv_cmd = "ssh %s sudo mv /tmp/netSLS/pids_successful /tmp/netSLS/pids_successful.0 &> /dev/null"\
-                             % worker.hn()
-                    subprocess.check_output(mv_cmd.split())
-                    cat_cmd = "ssh %s cat /tmp/netSLS/pids_successful.0" % worker.hn()
-                    completed_senders = [int(x) for x in
-                                         subprocess.check_output(cat_cmd.split()).split()]
-                    logger.debug("Completed senders {}".format(str(completed_senders)))
+                    failed_senders = self.__worker_get_pids_from_file(
+                        worker,
+                        os.path.join(configuration.get_worker_log_dir(), "pids_failed"))
+                    logger.debug("Failed senders {!s}".format(successful_senders))
                 except subprocess.CalledProcessError:
-                    # this possible, if file does not yet exist
+                    # This possible, if file pids_failed does not yet exist
                     pass
 
+                # For every failed sender retrieve and print sender's output from worker
+                for pid in failed_senders:
+                    try:
+                        logfile_content = self.__worker_get_file_content(
+                            worker,
+                            os.path.join(configuration.get_worker_log_dir(), "processes", str(pid)))
+                        logfile_formatted = ""
+                        for line in logfile_content.splitlines():
+                            logfile_formatted += "\t\t%s\n" % line
+
+                        logger.error("Transmission with PID {0} failed:\n{1}".format(
+                            pid, logfile_formatted))
+                    except subprocess.CalledProcessError, err:
+                        logger.error("Failed to retrieve logfile for process with PID %i" % pid)
+                        # Not allowed, as every daemonized process writes to a logfile
+                        raise err
+
+                # post-process successful and failed senders
                 with self.open_transmissions_lock:
                     # all successful transmissions
-                    for pid in completed_senders:
-                        if pid in self.new_transmissions[worker]:
-                            logger.info("Transmission {} completed".format(
-                                        self.new_transmissions[worker][pid].transmission_id))
-                            self.new_transmissions[worker][pid].stop(
-                                transmission.Transmission.SUCCESSFUL)
-                            del self.new_transmissions[worker][pid]
-                        elif pid in self.open_transmissions[worker]:
+                    for pid in successful_senders:
+                        if pid in self.open_transmissions[worker]:
                             logger.info("Transmission {} completed".format(
                                 self.open_transmissions[worker][pid].transmission_id))
                             self.open_transmissions[worker][pid].stop(
                                 transmission.Transmission.SUCCESSFUL)
                             del self.open_transmissions[worker][pid]
                         else:
-                            logger.error("PID of completed transmission not found")
+                            logger.error("PID of successful transmission not found")
 
                     # all unsuccessful transmissions
-                    for pid, trans in self.open_transmissions[worker].items():
-                        if pid in running_senders:
-                            continue
-                        logger.error("Transmission with PID {} failed".format(pid))
-                        trans.stop(transmission.Transmission.FAILED)
+                    for pid in failed_senders:
+                        if pid in self.open_transmissions[worker]:
+                            self.open_transmissions[worker][pid].stop(
+                                transmission.Transmission.FAILED)
                         del self.open_transmissions[worker][pid]
 
-            # move new transmissions to open transmissions
-            for worker in self.new_transmissions.keys():
-                for k, v in self.new_transmissions[worker].items():
-                    self.open_transmissions[worker][k] = v
-                self.new_transmissions[worker] = dict()
-
+            print(self.open_transmissions.values())
             time.sleep(self.interval)
 
     def start_transmission(self, trans):
@@ -131,4 +132,19 @@ class TransmissionManager(threading.Thread):
         # store pid
         with self.open_transmissions_lock:
             worker = trans.source.worker
-            self.new_transmissions[worker][pid] = trans
+            self.open_transmissions[worker][pid] = trans
+
+    def __worker_get_pids_from_file(self, worker, path):
+        self.__worker_rotate_file(worker, path)
+        content = self.__worker_get_file_content(worker, "%s.0" % path)
+
+        return [int(x) for x in content.split()]
+
+    def __worker_get_file_content(self, worker, path):
+        cat_cmd = "ssh {0} cat {1}".format( worker.hn(), path)
+
+        return subprocess.check_output(cat_cmd.split())
+
+    def __worker_rotate_file(self, worker, path):
+        mv_cmd = "ssh {0} sudo mv {1} {1}.0 &> /dev/null".format(worker.hn(), path)
+        subprocess.check_output(mv_cmd.split())

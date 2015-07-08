@@ -52,7 +52,7 @@ def get_rpc_server_port():
 
 def get_tcp_receiver_port():
     """Port used in transportTCP."""
-    return _CONFIG.get("TCPReceiverPort", 13373)  # 5502)
+    return _CONFIG.get("TCPReceiverPort", 5502)
 
 
 def get_transmission_manager_polling_interval():
@@ -67,3 +67,8 @@ def get_transport_api():
         if key == api_name:
             return value
     return None
+
+
+def get_worker_log_dir():
+    """Get logging directory on MaxiNet workers."""
+    return _CONFIG.get("WorkerLogDir", "/tmp/netSLS")

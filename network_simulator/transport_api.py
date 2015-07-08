@@ -101,10 +101,11 @@ class TransportTCP(TransportAPI):
         receiver_cmd = "%s %i" % (
             cls._get_binary_path("tcp_receive"),
             configuration.get_tcp_receiver_port())
-        pid = host.cmd("%s %s" % (
+        result = host.cmd("%s %s %s" % (
             cls._get_binary_path("daemonize"),
-            receiver_cmd)).splitlines()[0]
-        if not pid.isdigit():
+            configuration.get_worker_log_dir(),
+            receiver_cmd)).splitlines()
+        if len(result) == 0 or len(result) > 1 or not result[0].isdigit():
             logger.error("Failed to start receiver")
             return False
 
@@ -125,9 +126,13 @@ class TransportTCP(TransportAPI):
                                         configuration.get_tcp_receiver_port(),
                                         n_bytes)
 
+        logger.debug("Invoking %s on host %s" % (transmit_cmd, source.nn))
+
         # start daemonized sender
-        pid = source.cmd("%s %s" % (cls._get_binary_path("daemonize"),
-                                    transmit_cmd)).splitlines()[0]
+        pid = source.cmd("%s %s %s" % (
+            cls._get_binary_path("daemonize"),
+            configuration.get_worker_log_dir(),
+            transmit_cmd)).splitlines()[0]
 
         if not pid.isdigit():
             return None
