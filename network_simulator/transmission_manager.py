@@ -68,10 +68,10 @@ class TransmissionManager(threading.Thread):
                 # get list of successfully completed senders
                 completed_senders = ""
                 try:
-                    mv_cmd = "ssh %s sudo mv /tmp/completed_senders /tmp/completed_senders.0 &> /dev/null"\
+                    mv_cmd = "ssh %s sudo mv /tmp/netSLS/pids_successful /tmp/netSLS/pids_successful.0 &> /dev/null"\
                              % worker.hn()
                     subprocess.check_output(mv_cmd.split())
-                    cat_cmd = "ssh %s cat /tmp/completed_senders.0" % worker.hn()
+                    cat_cmd = "ssh %s cat /tmp/netSLS/pids_successful.0" % worker.hn()
                     completed_senders = [int(x) for x in
                                          subprocess.check_output(cat_cmd.split()).split()]
                     logger.debug("Completed senders {}".format(str(completed_senders)))
