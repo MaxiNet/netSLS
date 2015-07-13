@@ -19,13 +19,33 @@ import os.path
 
 import configuration
 import network_simulator
+import process_manager
+import process
 
 logger = logging.getLogger(__name__)
+
 
 class TransportAPI(object):
     """Transport API used by Transmission threads to handle coflows and send
     coflow transmissions through MaxiNet.
     """
+
+    _process_manager = None
+
+    @classmethod
+    def init(cls):
+        """Initialize the transport API."""
+        if cls._process_manager:
+            cls._process_manager.stop()
+        cls._process_manager = process_manager.ProcessManager(
+            configuration.get_process_manager_polling_interval())
+        cls._process_manager.start()
+
+    @classmethod
+    def finalize(cls):
+        """Finalizes the transport API."""
+        cls._process_manager.stop()
+        cls._process_manager = None
 
     @classmethod
     def register_coflow(cls, coflow_description):
@@ -42,7 +62,7 @@ class TransportAPI(object):
         return True
 
     @classmethod
-    def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes):
+    def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes, subscription_key):
         """Transmit n bytes from source to destination.
 
         Args:
@@ -53,25 +73,25 @@ class TransportAPI(object):
             subscription_key: Key under which the result will be published.
 
         Returns:
-            PID of sending process (daemonized) or None on failure
+            transmission_id of the new transmission.
         """
         raise NotImplementedError()
 
     @classmethod
-    def setup_host(cls, host):
-        """Perform setup on host when the simulation is started.
+    def setup_node(cls, node):
+        """Perform setup on MaxiNet node when the simulation is started.
 
         Args:
-            host: MaxiNet host to perform setup on.
+            node: MaxiNet node to perform setup on.
         """
         pass
 
     @classmethod
-    def teardown(cls, host):
-        """Perform teardown on host when the simulation is stopped.
+    def teardown_node(cls, node):
+        """Perform teardown on MaxiNet node when the simulation is stopped.
 
         Args:
-            host: MaxiNet host to perform teardown on.
+            node: MaxiNet node to perform teardown on.
         """
         pass
 
@@ -103,45 +123,30 @@ class TransportTCP(TransportAPI):
     """
 
     @classmethod
-    def setup(cls, host):
+    def setup_node(cls, node):
         # start receiver
         receiver_cmd = "%s %i" % (
             cls._get_binary_path("tcp_receive"),
             configuration.get_tcp_receiver_port())
-        result = host.cmd("%s %s %s" % (
-            cls._get_binary_path("daemonize"),
-            configuration.get_worker_working_directory(),
-            receiver_cmd)).splitlines()
-        if len(result) == 0 or len(result) > 1 or not result[0].isdigit():
-            logger.error("Failed to start receiver")
-            return False
-
-        return True
+        receiver_process = process.ReceiverProcess(node, receiver_cmd)
+        cls._process_manager.start_process(receiver_process)
 
     @classmethod
-    def teardown(cls, host):
+    def teardown_node(cls, node):
         # kill receiver
-        host.cmd("killall tcp_receive")
+        node.cmd("killall tcp_receive")
 
     @classmethod
-    def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes):
+    def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes,
+                         subscription_key):
         topology = network_simulator.NetworkSimulator.get_instance().topology
         destination_ip = topology.get_ip_address(destination.nn)
 
-        transmit_cmd = "%s %s %i %i" % (cls._get_binary_path("tcp_send"),
-                                        destination_ip,
-                                        configuration.get_tcp_receiver_port(),
-                                        n_bytes)
+        trans_command = "%s %s %i %i" % (
+            cls._get_binary_path("tcp_send"), destination_ip,
+            configuration.get_tcp_receiver_port(), n_bytes)
+        trans_process = process.TransmissionProcess(source, trans_command,
+                                                    subscription_key)
+        cls._process_manager.start_process(trans_process)
 
-        logger.debug("Invoking %s on host %s" % (transmit_cmd, source.nn))
-
-        # start daemonized sender
-        pid = source.cmd("%s %s %s" % (
-            cls._get_binary_path("daemonize"),
-            configuration.get_worker_working_directory(),
-            transmit_cmd)).splitlines()[0]
-
-        if not pid.isdigit():
-            return None
-
-        return int(pid)
+        return trans_process.transmission_id

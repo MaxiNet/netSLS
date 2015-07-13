@@ -29,13 +29,12 @@ import configuration
 from publisher import Publisher
 from rpc_server import RPCServer
 import topology
-from transmission import Transmission
-from transmission_manager import TransmissionManager
 import transport_api
 
 import traceback
 
 logger = logging.getLogger(__name__)
+
 
 class NetworkSimulator(object):
     """Implementation of the network simulators public interface.
@@ -58,8 +57,6 @@ class NetworkSimulator(object):
     def __init__(self):
         self.publisher = Publisher()
         self.rpc_server = RPCServer(self)
-        self.transmission_manager = TransmissionManager(
-            configuration.get_transmission_manager_polling_interval())
 
         self.cluster = maxinet.Cluster()
         self.__experiment = None
@@ -69,13 +66,12 @@ class NetworkSimulator(object):
     def start(self):
         """Start the network simulator."""
         self.cluster.add_workers()
-        self.transmission_manager.start()
         # start serving rpc calls forever
         self.rpc_server.serve_forever()
 
     def stop(self):
         """Stop the network simulator."""
-        self.transmission_manager.stop()
+        configuration.get_transport_api().finalize()
         self.rpc_server.stop()
         if self.__experiment:
             self.__experiment.stop()
@@ -109,6 +105,7 @@ class NetworkSimulator(object):
             self.start_simulation.__name__))
         logger.debug("topology:\n{}".format(json.dumps(topo, indent=4)))
 
+        configuration.get_transport_api().init()
         try:
             # Copy transport api executables onto workers
             for worker in self.cluster.worker:
@@ -148,7 +145,7 @@ class NetworkSimulator(object):
             if self.__experiment:
                 for host in self.__experiment.hosts:
                     # tear down transmission api
-                    configuration.get_transport_api().teardown(host)
+                    configuration.get_transport_api().teardown_node(host)
                 self.__experiment.stop()
 
             self.__experiment = maxinet.Experiment(
@@ -184,7 +181,7 @@ class NetworkSimulator(object):
                 host.cmd("/home/schwabe/trafficGen/trafficGenerator/trafficServer2/trafficServer2 &>/dev/null &")
 
                 # setup transport api
-                configuration.get_transport_api().setup(host)
+                configuration.get_transport_api().setup_node(host)
 
             # send start command to all traffGen processes.
             time.sleep(5)
@@ -238,7 +235,7 @@ class NetworkSimulator(object):
         """RPC: Unregister a coflow.
 
         Unregister the coflow corresponding to coflow_id using the currente
-        transort API.
+        transport API.
 
         Args:
             coflow_id: Coflow id of the coflow to remove.
@@ -277,15 +274,14 @@ class NetworkSimulator(object):
         logger.debug("coflow_id: {}, source: {}, destination: {}, n_bytes: {}, subscription_key: {}".format(
             coflow_id, source, destination, n_bytes, subscription_key))
 
+        # translate hostnames to MaxiNet nodes
         mn_source = self.__experiment.get_node(
             self.topology.get_mn_hostname(source))
         mn_destination = self.__experiment.get_node(
             self.topology.get_mn_hostname(destination))
-        transmission = Transmission(
-            coflow_id, mn_source, mn_destination, n_bytes, subscription_key)
-        self.transmission_manager.start_transmission(transmission)
 
-        return transmission.transmission_id
+        return configuration.get_transport_api().transmit_n_bytes(
+            coflow_id, mn_source, mn_destination, n_bytes, subscription_key)
 
     @classmethod
     def get_instance(cls):

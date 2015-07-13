@@ -55,7 +55,7 @@ def get_tcp_receiver_port():
     return _CONFIG.get("TCPReceiverPort", 5502)
 
 
-def get_transmission_manager_polling_interval():
+def get_process_manager_polling_interval():
     """Polling interval for TransmissionManager."""
     return _CONFIG.get("TransmissionManagerPollingInterval", 1)
 

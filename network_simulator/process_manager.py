@@ -22,60 +22,65 @@ import time
 
 import configuration
 import network_simulator
-import transmission
+import process
 
 logger = logging.getLogger(__name__)
 
-class TransmissionManager(threading.Thread):
-    """Thread for keeping track of open and completed transmissions.
 
-    Each transmission is a separate process on one of the workers. This thread
-    polls these workers for completed and failed transmissions.
+class ProcessManager(threading.Thread):
+    """Watches the execution of processes on MaxiNet nodes.
+
+    The ProcessManager polls all MaxiNet workers for the state of invoked
+    background processes. When a remote process terminates, a callback on the
+    corresponding Process object is performed. Additionally, if the process
+    terminated with an exit code other than 0, the process's stdout and stderr
+    are logged.
 
     Attributes:
-        interval: Polling interval in ms.
+        _interval: Polling interval in ms.
+        __running_processes: Mapping of MaxiNet workers to running processes.
     """
 
     def __init__(self, interval):
         threading.Thread.__init__(self)
 
-        self._stop = threading.Event()
+        self._interval = interval
 
-        self.interval = interval
-        self.open_transmissions_lock = threading.Lock()
-        self.open_transmissions = dict()
+        self.__running_processes = dict()
+        self.__running_processes_lock = threading.Lock()
+        self.__stop = threading.Event()
 
     def stop(self):
-        self._stop.set()
+        self.__stop.set()
 
     def run(self):
         for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
-            self.open_transmissions[worker] = dict()
+            self.__running_processes[worker] = dict()
 
-        while not self._stop.isSet():
+        while not self.__stop.isSet():
             for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
-                successful_senders = []
+                successful_processes = []
                 try:
-                    successful_senders = self.__worker_get_pids_from_file(
+                    successful_processes = self.__worker_get_pids_from_file(
                         worker,
                         os.path.join(configuration.get_worker_working_directory(), "pids_successful"))
-                    logger.debug("Successful senders {!s}".format(successful_senders))
+                    logger.debug("Successful processes {!s}".format(successful_processes))
                 except subprocess.CalledProcessError:
                     # This possible, if file pids_successful does not yet exist
                     pass
 
-                failed_senders = []
+                failed_processes = []
                 try:
-                    failed_senders = self.__worker_get_pids_from_file(
+                    failed_processes = self.__worker_get_pids_from_file(
                         worker,
                         os.path.join(configuration.get_worker_working_directory(), "pids_failed"))
-                    logger.debug("Failed senders {!s}".format(successful_senders))
+                    logger.debug("Failed processes {!s}".format(successful_processes))
                 except subprocess.CalledProcessError:
                     # This possible, if file pids_failed does not yet exist
                     pass
 
-                # For every failed sender retrieve and print sender's output from worker
-                for pid in failed_senders:
+                # For every failed process retrieve and print processes's output from worker
+                for pid in failed_processes:
                     try:
                         logfile_content = self.__worker_get_file_content(
                             worker,
@@ -84,61 +89,51 @@ class TransmissionManager(threading.Thread):
                         for line in logfile_content.splitlines():
                             logfile_formatted += "\t\t%s\n" % line
 
-                        logger.error("Transmission with PID {0} failed:\n{1}".format(
+                        logger.error("Process with PID {0} failed:\n{1}".format(
                             pid, logfile_formatted))
                     except subprocess.CalledProcessError, err:
                         logger.error("Failed to retrieve logfile for process with PID %i" % pid)
                         # Not allowed, as every daemonized process writes to a logfile
                         raise err
 
-                # post-process successful and failed senders
-                with self.open_transmissions_lock:
+                # post-process successful and failed processes
+                with self.__running_processes_lock:
                     # all successful transmissions
-                    for pid in successful_senders:
-                        if pid in self.open_transmissions[worker]:
-                            logger.info("Transmission {} completed".format(
-                                self.open_transmissions[worker][pid].transmission_id))
-                            self.open_transmissions[worker][pid].stop(
-                                transmission.Transmission.SUCCESSFUL)
-                            del self.open_transmissions[worker][pid]
+                    for pid in successful_processes:
+                        if pid in self.__running_processes[worker]:
+                            self.__running_processes[worker][pid].call_terminated(
+                                process.Process.SUCCESSFUL)
+                            del self.__running_processes[worker][pid]
                         else:
                             logger.error("PID of successful transmission not found")
 
                     # all unsuccessful transmissions
-                    for pid in failed_senders:
-                        if pid in self.open_transmissions[worker]:
-                            self.open_transmissions[worker][pid].stop(
-                                transmission.Transmission.FAILED)
-                        del self.open_transmissions[worker][pid]
+                    for pid in failed_processes:
+                        if pid in self.__running_processes[worker]:
+                            self.__running_processes[worker][pid].call_terminated(
+                                process.Process.FAILED)
+                            del self.__running_processes[worker][pid]
 
-            time.sleep(self.interval)
+            time.sleep(self._interval)
 
-    def start_transmission(self, trans):
-        """Start a transmission.
-
-        Start the given Transmission and add it to the list of open transmissions.
+    def start_process(self, proc):
+        """Starts the given process and adds it to the list of running processes.
 
         Args:
-            trans: Transmission to start.
+            proc: Process to start.
         """
-        logger.info("Transmission {} started".format(trans.transmission_id))
-        pid = trans.start()
-
-        if not pid:
-            logger.error("Failed to start transmission with id {}".format(trans.transmission_id))
-            return
-
-        # store pid
-        with self.open_transmissions_lock:
-            worker = trans.source.worker
-            self.open_transmissions[worker][pid] = trans
+        pid = proc.start()
+        with self.__running_processes_lock:
+            if proc.get_worker() not in self.__running_processes:
+                self.__running_processes[proc.get_worker()] = dict()
+            self.__running_processes[proc.get_worker()][pid] = proc
 
     def __worker_get_pids_from_file(self, worker, path):
         """Returns a list of PIDs listed in a file on the specified worker node.
 
         Args:
-            worker: worker node to read the file on.
-            path: file containing PIDs.
+            worker: Worker node to read the file on.
+            path: File containing PIDs.
 
         Returns:
             A list of PIDs specified in the file.
@@ -153,13 +148,13 @@ class TransmissionManager(threading.Thread):
         """Returns the content of a file on the specified worker node.
 
         Args:
-            worker: worker node to read file on.
-            path: file to read.
+            worker: Worker node to read file on.
+            path: File to read.
 
         Returns:
             Content of the specified file.
         """
-        cat_cmd = "ssh {0} cat {1}".format( worker.hn(), path)
+        cat_cmd = "ssh {0} cat {1}".format(worker.hn(), path)
 
         return subprocess.check_output(cat_cmd.split())
 
@@ -169,8 +164,8 @@ class TransmissionManager(threading.Thread):
 
         The "path" will be moved to "path.0".
         Args:
-            worker: worker node rotate file on.
-            path: file to rotate.
+            worker: Worker node rotate file on.
+            path: File to rotate.
         """
         mv_cmd = "ssh {0} sudo mv {1} {1}.0 &> /dev/null".format(worker.hn(), path)
         subprocess.check_output(mv_cmd.split())
