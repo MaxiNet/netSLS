@@ -15,18 +15,22 @@ limitations under the License.
 """
 
 import logging
+import traceback
 
 import gevent
 import gevent.wsgi
 import gevent.queue
+from tinyrpc import MethodNotFoundError, ServerError
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.wsgi import WsgiServerTransport
 from tinyrpc.server.gevent import RPCServerGreenlets
 from tinyrpc.dispatch import RPCDispatcher
 
 import configuration
+import utils
 
 logger = logging.getLogger(__name__)
+
 
 class RPCServer(object):
     """Provides an interface via JSON-RPC.
@@ -39,7 +43,7 @@ class RPCServer(object):
         Args:
             interface: Interface to provide.
         """
-        self.__dispatcher = RPCDispatcher()
+        self.__dispatcher = RPCLoggingDispatcher()
         transport = WsgiServerTransport(queue_class=gevent.queue.Queue)
 
         self._wsgi_server = gevent.wsgi.WSGIServer(
@@ -70,3 +74,32 @@ class RPCServer(object):
     def stop(self):
         """Stops the RPC server."""
         self._wsgi_server.stop()
+
+
+class RPCLoggingDispatcher(RPCDispatcher):
+    """A modified version of RPCDispatcher which logs errors on the server side."""
+
+    def _dispatch(self, request):
+        try:
+            try:
+                method = self.get_method(request.method)
+            except KeyError as e:
+                logger.error("RPC method not found: {}".format(request.method))
+                return request.error_respond(MethodNotFoundError(e))
+
+            # we found the method
+            try:
+                result = method(*request.args, **request.kwargs)
+            except Exception as e:
+                # an error occured within the method, return it
+                logger.error("RPC method {} failed:\n{}".format(
+                    request.method, utils.indent(traceback.format_exc(), 2)))
+                return request.error_respond(e)
+
+            # respond with result
+            return request.respond(result)
+        except Exception as e:
+            logger.error("RPC method {} failed unexpectedly:\n{}".format(
+                request.method, utils.indent(traceback.format_exc(), 2)))
+            # unexpected error, do not let client know what happened
+            return request.error_respond(ServerError())
