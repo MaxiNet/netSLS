@@ -1,75 +1,86 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python2
 
-# Copyright 2015 Malte Splietker
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+"""
+Copyright 2015 Malte Splietker
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-function print_help {
-  echo "Usage: daemonize [-h|--help] DIRECTORY COMMAND [ARGUMENTS]"
-  echo
-  echo "Run COMMAND with optional ARGUMENTS in a subshell, place the subshell in"
-  echo "the background and print the subshell's PID as a reference."
-  echo
-  echo "STDOUT and STDERR of the COMMAND are written to DIRECTORY/proceeses/PID."
-  echo
-  echo "If the COMMAND terminates successful or fails the subshell's PID will be"
-  echo "appended to DIRECTORY/pids_successful or DIRECTORY/pids_failed,"
-  echo "respectively."
-}
+  http://www.apache.org/licenses/LICENSE-2.0
 
-EXIT="TRUE"
-if [[ -z $1 || $1 == "-h" || $1 == "--help" || -z $2 ]]; then
-  :
-elif [[ $1 != /* ]]; then
-  echo -e "ERROR: Not an absolute path: $1\n"
-elif [[ ! -x $2 ]]; then
-  echo -e "ERROR: Not an executable: $2\n"
-else
-  EXIT="FALSE"
-fi
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
-if [[ ${EXIT} == "TRUE" ]]; then
-  print_help
-  exit 2
-fi
+from argparse import ArgumentParser
+import os
+import os.path
+import subprocess
 
 
-CMD=${@:2}
+def main():
+    parser = ArgumentParser(description="""
+        Run a command in background and print its PID.
 
-DIRECTORY=$1
-PROCESS_LOG_DIRECTORY="${DIRECTORY}/processes"
+        Stdout and stderr of the command are written to
+        \"Directory/processes/PID\".
 
-mkdir -p ${PROCESS_LOG_DIRECTORY}
-if [[ ! -d ${PROCESS_LOG_DIRECTORY} ]]; then
-  exit 1
-fi
+        When the process terminates, its PID is written to
+        \"Directory/pids_successful\" or \"Directory/pids_failed\" depending on
+        the process's return value.""")
+    parser.add_argument("directory", metavar="Directory",
+                        help="Working directory")
+    parser.add_argument("command", metavar="Command",
+                        help="Command to execute in background")
+    parser.add_argument("args", metavar="Argument", nargs="*",
+                        help="Optional arguments for Command")
+    args = parser.parse_args()
 
-# Execute the command in a subshell and use the subshell's PID as a reference
-# for the process:
-#   - The subshell terminates as the process terminates
-#   - All output of the process will be written to a file called ${PID}
-# If the process terminated successfully store its PID.
-(
-    PID=${BASHPID};
-    ${CMD} 2>&1 >${PROCESS_LOG_DIRECTORY}/${PID} | tee --append ${PROCESS_LOG_DIRECTORY}/${PID};
+    (r, w) = os.pipe()
+    pid = os.fork()
 
-    RESULT=${PIPESTATUS[0]}
-    if [[ ${RESULT} -eq 0 ]]; then
-        echo ${PID} >> ${DIRECTORY}/pids_successful
-    else
-        echo ${PID} >> ${DIRECTORY}/pids_failed
-    fi
-) &
+    if pid == 0:
+        # Child process:
+        working_directory = args.directory
+        logging_directory = os.path.join(working_directory, "processes")
+        if not os.path.isdir(logging_directory):
+            os.makedirs(logging_directory)
 
-echo "$!"
+        # Start the command as background process
+        command = args.command
+        arguments = args.args
+        process = subprocess.Popen(
+            [command] + arguments, stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE)
+
+        # Send the background process's PID to the parent process
+        os.write(w, str(process.pid))
+        os.close(r)
+        os.close(w)
+
+        # Write the process's stdout and stderr to a file
+        log_path = os.path.join(logging_directory, str(process.pid))
+        with open(log_path, "w") as log_file:
+            log_file.write(process.stdout.read())
+
+        process.wait()
+        if process.returncode == 0:
+            pid_file = os.path.join(working_directory, "pids_successful")
+        else:
+            pid_file = os.path.join(working_directory, "pids_failed")
+        with open(pid_file, "a") as f:
+            f.write("%i\n" % process.pid)
+    else:
+        # Parent process:
+        # Get PID from child process
+        pid = os.read(r, 10)
+        os.close(w)
+        os.close(r)
+        print(pid)
+
+if __name__ == "__main__":
+    main()
