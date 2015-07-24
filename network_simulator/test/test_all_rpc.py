@@ -66,8 +66,13 @@ class Sender(threading.Thread):
         except requests.exceptions.ConnectionError:
             self.result = "CONNECTION_REFUSED"
             return
-        result = self.subscriber.recv().splitlines()[1]
+
+        if transmission_id == -1:
+            self.result = "FAILED_TO_START"
+            return
         logger.info("%s: Returned transmission_id = %i" % (self.key, transmission_id))
+
+        result = self.subscriber.recv().splitlines()[1]
         logger.debug("%s: [ZMQ] %s" % (self.key, result))
 
         self.result = json.loads(result)["type"]
@@ -149,6 +154,8 @@ class TestRPCFunctions(unittest.TestCase):
         for sender in senders:
             sender.join()
             self.assertNotEqual(sender.result, "CONNECTION_REFUSED", msg="RPC connection refused")
+            self.assertNotEqual(sender.result, "FAILED_TO_START",
+                                msg="Failed to start transmission. Check Network simulator for details")
             self.assertEqual(sender.result, "TRANSMISSION_SUCCESSFUL")
 
 if __name__ == '__main__':
