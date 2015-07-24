@@ -16,7 +16,7 @@ limitations under the License.
 
 from ConfigParser import ConfigParser
 import inspect
-from os.path import isfile
+from os.path import isfile, abspath
 
 import transport_api
 
@@ -70,5 +70,11 @@ def get_transport_api():
 
 
 def get_worker_working_directory():
-    """Get working directory on MaxiNet workers."""
-    return _CONFIG.get("WorkerLogDir", "/tmp/netSLS")
+    """Working directory on MaxiNet workers."""
+    working_directory = _CONFIG.get("WorkerLogDir", "/tmp/netSLS")
+
+    # MaxiNet executes commands with root permission. We don't want to mess up our workers.
+    if abspath(working_directory) == "/":
+        working_directory = "/tmp/netSLS"
+
+    return working_directory
