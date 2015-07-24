@@ -49,7 +49,6 @@ class TransportAPI(object):
             nodes: List of MaxiNet nodes the transport API is used on.
         """
         logger.debug("Initializing transport API")
-        self.reset()
 
         # Copy binaries to workers
         for worker in {node.worker for node in nodes}:
