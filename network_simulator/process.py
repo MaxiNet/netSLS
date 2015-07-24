@@ -21,6 +21,8 @@ import time
 import configuration
 import network_simulator
 import threading
+import transport_api
+import utils
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ class Process(object):
         _node: MaxiNet node the command is executed on.
         _command: Command executed by the process.
 
-        pid: PID of the process on the worker.
+        pid: PID of the remote process on the worker.
         start_time: Start time of transmission.
         end_time: End time of transmission.
     """
@@ -52,23 +54,32 @@ class Process(object):
         """Starts the process on the MaxiNet node and returns the remote PID.
 
         Returns:
-            PID of the remote process.
+            True if the process started successfully, False otherwise.
         """
         self.start_time = time.time()
 
         # start command as daemonized process
-        logger.debug("Invoking \"%s\" on MaxiNet node %s" % (self._command,
-                                                             self._node.nn))
-        pid = self._node.cmd("%s %s %s" % (
-            # TODO: Remove dependency of daemonize script from transport api
-            configuration.get_transport_api()._get_binary_path("daemonize"),
+        logger.debug("Daemonizing \"%s\" on MaxiNet node %s" % (self._command,
+                                                                self._node.nn))
+        result = self._node.cmd("%s %s %s" % (
+            transport_api.TransportAPI.get_binary_path("daemonize"),
             configuration.get_worker_working_directory(),
-            self._command)).splitlines()[0]
+            self._command))
+        pid = result.splitlines()[0]
 
-        if pid.isdigit():
-            self.pid = int(pid)
+        # daemonize is supposed to print ONLY the PID of the started process
+        if not pid.isdigit():
+            logger.error("Failed to start process:\n{}".format(
+                utils.indent(result, 2)))
+            return False
 
-        return self.pid
+        self.pid = int(pid)
+
+        return True
+
+    def kill(self):
+        """Kills the process running on the MaxiNet node."""
+        self._node.cmd("kill %i" % self.pid)
 
     def call_terminated(self, result):
         """Callback to be invoked, when the process terminated.
@@ -76,7 +87,7 @@ class Process(object):
         Args:
             result: termination result (SUCCESSFUL or FAILED).
         """
-        self.end_time = time.time() - self.start_time
+        self.end_time = time.time()
 
         if result == self.__class__.SUCCESSFUL:
             self._terminated_successfully()
@@ -130,7 +141,8 @@ class TransmissionProcess(Process):
 
     def _terminated_successfully(self):
         """Report transmission success to subscriber via the Publisher class."""
-        logger.info("TransmissionProcess with id %i terminated successfully" % self.transmission_id)
+        logger.info("TransmissionProcess with id %i terminated successfully. Duration: %f s" %
+                    (self.transmission_id, (self.end_time - self.start_time)))
         result_string = {
             "type": "TRANSMISSION_SUCCESSFUL",
             "data": {

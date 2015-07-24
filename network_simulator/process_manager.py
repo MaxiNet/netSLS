@@ -23,11 +23,13 @@ import time
 import configuration
 import network_simulator
 import process
+import ssh_tools
+import utils
 
 logger = logging.getLogger(__name__)
 
 
-class ProcessManager(threading.Thread):
+class ProcessManager(object):
     """Watches the execution of processes on MaxiNet nodes.
 
     The ProcessManager polls all MaxiNet workers for the state of invoked
@@ -37,23 +39,28 @@ class ProcessManager(threading.Thread):
     are logged.
 
     Attributes:
-        _interval: Polling interval in ms.
+        __interval: Polling interval in ms.
         __running_processes: Mapping of MaxiNet workers to running processes.
     """
 
     def __init__(self, interval):
-        threading.Thread.__init__(self)
+        self.__thread = threading.Thread(target=self.run)
 
-        self._interval = interval
+        self.__interval = interval
 
         self.__running_processes = dict()
         self.__running_processes_lock = threading.Lock()
         self.__stop = threading.Event()
 
+    def start(self):
+        self.__thread.start()
+
     def stop(self):
         self.__stop.set()
 
     def run(self):
+        self.__stop.clear()
+
         for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
             self.__running_processes[worker] = dict()
 
@@ -74,7 +81,7 @@ class ProcessManager(threading.Thread):
                     failed_processes = self.__worker_get_pids_from_file(
                         worker,
                         os.path.join(configuration.get_worker_working_directory(), "pids_failed"))
-                    logger.debug("Failed processes {!s}".format(successful_processes))
+                    logger.debug("Failed processes {!s}".format(failed_processes))
                 except subprocess.CalledProcessError:
                     # This possible, if file pids_failed does not yet exist
                     pass
@@ -82,12 +89,12 @@ class ProcessManager(threading.Thread):
                 # For every failed process retrieve and print processes's output from worker
                 for pid in failed_processes:
                     try:
-                        logfile_content = self.__worker_get_file_content(
-                            worker,
-                            os.path.join(configuration.get_worker_working_directory(), "processes", str(pid)))
-                        logfile_formatted = ""
-                        for line in logfile_content.splitlines():
-                            logfile_formatted += "\t\t%s\n" % line
+                        cat_cmd = "cat {1}".format(
+                            worker.hn(),
+                            os.path.join(configuration.get_worker_working_directory(),
+                                         "processes", str(pid)))
+                        logfile_content = ssh_tools.worker_ssh(worker, cat_cmd)
+                        logfile_formatted = utils.indent(logfile_content, 2)
 
                         logger.error("Process with PID {0} failed:\n{1}".format(
                             pid, logfile_formatted))
@@ -114,21 +121,61 @@ class ProcessManager(threading.Thread):
                                 process.Process.FAILED)
                             del self.__running_processes[worker][pid]
 
-            time.sleep(self._interval)
+            time.sleep(self.__interval)
 
     def start_process(self, proc):
         """Starts the given process and adds it to the list of running processes.
 
         Args:
             proc: Process to start.
+
+        Returns:
+            True if the process started successfully, False otherwise.
         """
-        pid = proc.start()
+        if not proc.start():
+            return False
+
         with self.__running_processes_lock:
             if proc.get_worker() not in self.__running_processes:
                 self.__running_processes[proc.get_worker()] = dict()
-            self.__running_processes[proc.get_worker()][pid] = proc
+            self.__running_processes[proc.get_worker()][proc.pid] = proc
 
-    def __worker_get_pids_from_file(self, worker, path):
+        return True
+
+    def reset(self):
+        """Reset the process manager.
+
+        Kill all processes still running and clear the list.
+        """
+        self.__kill_all_processes()
+        self.__running_processes = dict()
+        self.__thread = threading.Thread(target=self.run)
+
+    def kill(self, pid):
+        """Kill running process with the given PID.
+
+        Args:
+            pid: PID of the process to kill.
+        """
+        with self.__running_processes_lock:
+            if not pid in self.__running_processes:
+                return
+            self.__running_processes[pid].kill()
+            del self.__running_processes[pid]
+
+    def __kill_all_processes(self):
+        """Kill all processes that are stil listed as running."""
+        with self.__running_processes_lock:
+            if len(self.__running_processes) == 0:
+                return
+            for worker, processes in self.__running_processes.items():
+                kill_cmd = "kill -9"
+                for pid in processes.keys():
+                    kill_cmd += " {}".format(pid)
+                ssh_tools.worker_ssh(worker, kill_cmd)
+
+    @staticmethod
+    def __worker_get_pids_from_file(worker, path):
         """Returns a list of PIDs listed in a file on the specified worker node.
 
         Args:
@@ -138,34 +185,12 @@ class ProcessManager(threading.Thread):
         Returns:
             A list of PIDs specified in the file.
         """
-        self.__worker_rotate_file(worker, path)
-        content = self.__worker_get_file_content(worker, "%s.0" % path)
+        # Rotate the pid file, if exists
+        mv_cmd = "mv {1} {1}.0 &> /dev/null".format(worker.hn(), path)
+        ssh_tools.worker_ssh(worker, mv_cmd)
+
+        # get rotated file's content
+        cat_cmd = "cat {1}".format(worker.hn(), "%s.0" % path)
+        content = ssh_tools.worker_ssh(worker, cat_cmd)
 
         return [int(x) for x in content.split()]
-
-    @staticmethod
-    def __worker_get_file_content(worker, path):
-        """Returns the content of a file on the specified worker node.
-
-        Args:
-            worker: Worker node to read file on.
-            path: File to read.
-
-        Returns:
-            Content of the specified file.
-        """
-        cat_cmd = "ssh {0} cat {1}".format(worker.hn(), path)
-
-        return subprocess.check_output(cat_cmd.split())
-
-    @staticmethod
-    def __worker_rotate_file(worker, path):
-        """Rotates a file on the specified worker node.
-
-        The "path" will be moved to "path.0".
-        Args:
-            worker: Worker node rotate file on.
-            path: File to rotate.
-        """
-        mv_cmd = "ssh {0} sudo mv {1} {1}.0 &> /dev/null".format(worker.hn(), path)
-        subprocess.check_output(mv_cmd.split())

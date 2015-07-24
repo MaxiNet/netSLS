@@ -21,6 +21,7 @@ import configuration
 import network_simulator
 import process_manager
 import process
+import ssh_tools
 
 logger = logging.getLogger(__name__)
 
@@ -28,32 +29,59 @@ logger = logging.getLogger(__name__)
 class TransportAPI(object):
     """Transport API used by Transmission threads to handle coflows and send
     coflow transmissions through MaxiNet.
+
+    Attributes:
+        _process_manager: Process manager watching transport API related processes.
+        _nodes: List of nodes the transport API is used on.
     """
 
-    _process_manager = None
-
-    @classmethod
-    def init(cls):
-        """Initialize the transport API."""
-        if cls._process_manager:
-            cls._process_manager.stop()
-        cls._process_manager = process_manager.ProcessManager(
+    def __init__(self):
+        self._process_manager = process_manager.ProcessManager(
             configuration.get_process_manager_polling_interval())
-        cls._process_manager.start()
+        self._nodes = list()
 
-    @classmethod
-    def finalize(cls):
-        """Finalizes the transport API."""
-        cls._process_manager.stop()
-        cls._process_manager = None
+    def init(self, nodes):
+        """Initialize the transport API.
 
-    @classmethod
-    def register_coflow(cls, coflow_description):
+        Instantiate the process manager and all specified MaxiNet nodes.
+
+        Args:
+            nodes: List of MaxiNet nodes the transport API is used on.
+        """
+        logger.debug("Initializing transport API")
+        self.reset()
+
+        # Copy binaries to workers
+        for worker in {node.worker for node in nodes}:
+            ssh_tools.copy_to_worker(
+                worker, os.path.abspath("./transport_bin"),
+                configuration.get_worker_working_directory())
+
+        self._process_manager.start()
+
+        self._nodes = nodes
+        for node in self._nodes:
+            self._init_node(node)
+
+    def reset(self):
+        """Reset the transport API.
+
+        Reset all transport API specific effects on the MaxiNet nodes and stop the process manager.
+        """
+        for node in self._nodes:
+            self._reset_node(node)
+        self._nodes = list()
+
+        if not self._process_manager:
+            return
+        self._process_manager.stop()
+        self._process_manager.reset()
+
+    def register_coflow(self, coflow_description):
         """Register a new coflow."""
         return "COFLOW-00000"
 
-    @classmethod
-    def unregister_coflow(cls, coflow_id):
+    def unregister_coflow(self, coflow_id):
         """Un-register a coflow.
 
         Returns:
@@ -61,8 +89,7 @@ class TransportAPI(object):
         """
         return True
 
-    @classmethod
-    def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes, subscription_key):
+    def transmit_n_bytes(self, coflow_id, source, destination, n_bytes, subscription_key):
         """Transmit n bytes from source to destination.
 
         Args:
@@ -73,30 +100,28 @@ class TransportAPI(object):
             subscription_key: Key under which the result will be published.
 
         Returns:
-            transmission_id of the new transmission.
+            transmission_id of the new transmission or -1 if failed.
         """
         raise NotImplementedError()
 
-    @classmethod
-    def setup_node(cls, node):
-        """Perform setup on MaxiNet node when the simulation is started.
+    def _init_node(self, node):
+        """Initialize a MaxiNet node according to the transport API.
 
         Args:
-            node: MaxiNet node to perform setup on.
+            node: MaxiNet node to initialize.
+        """
+        pass
+
+    def _reset_node(self, node):
+        """Reset a MaxiNet node when the simulation is stopped.
+
+        Args:
+            node: MaxiNet node to reset.
         """
         pass
 
     @classmethod
-    def teardown_node(cls, node):
-        """Perform teardown on MaxiNet node when the simulation is stopped.
-
-        Args:
-            node: MaxiNet node to perform teardown on.
-        """
-        pass
-
-    @classmethod
-    def get_remote_transport_bin_path(cls):
+    def _get_remote_transport_bin_path(cls):
         """Returns path to transport binaries on worker nodes.
 
         Returns:
@@ -106,13 +131,13 @@ class TransportAPI(object):
                             "transport_bin")
 
     @classmethod
-    def _get_binary_path(cls, binary):
+    def get_binary_path(cls, binary):
         """Returns path of binary on worker nodes.
 
         Returns:
             Path to binary on worker nodes.
         """
-        return os.path.join(cls.get_remote_transport_bin_path(), binary)
+        return os.path.join(cls._get_remote_transport_bin_path(), binary)
 
 
 class TransportTCP(TransportAPI):
@@ -122,31 +147,35 @@ class TransportTCP(TransportAPI):
     ignored.
     """
 
-    @classmethod
-    def setup_node(cls, node):
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        self.__node_to_receiver_pid_map = dict()
+
+    def _init_node(self, node):
         # start receiver
         receiver_cmd = "%s %i" % (
-            cls._get_binary_path("tcp_receive"),
+            self.get_binary_path("tcp_receive"),
             configuration.get_tcp_receiver_port())
         receiver_process = process.ReceiverProcess(node, receiver_cmd)
-        cls._process_manager.start_process(receiver_process)
+        receiver_pid = self._process_manager.start_process(receiver_process)
+        self.__node_to_receiver_pid_map[node] = receiver_pid
 
-    @classmethod
-    def teardown_node(cls, node):
+    def _reset_node(self, node):
         # kill receiver
-        node.cmd("killall tcp_receive")
+        if node in self.__node_to_receiver_pid_map:
+            self._process_manager.kill(self.__node_to_receiver_pid_map[node])
 
-    @classmethod
-    def transmit_n_bytes(cls, coflow_id, source, destination, n_bytes,
+    def transmit_n_bytes(self, coflow_id, source, destination, n_bytes,
                          subscription_key):
         topology = network_simulator.NetworkSimulator.get_instance().topology
         destination_ip = topology.get_ip_address(destination.nn)
 
         trans_command = "%s %s %i %i" % (
-            cls._get_binary_path("tcp_send"), destination_ip,
+            self.get_binary_path("tcp_send"), destination_ip,
             configuration.get_tcp_receiver_port(), n_bytes)
         trans_process = process.TransmissionProcess(source, trans_command,
                                                     subscription_key)
-        cls._process_manager.start_process(trans_process)
+        if not self._process_manager.start_process(trans_process):
+            return -1
 
         return trans_process.transmission_id

@@ -17,9 +17,7 @@ limitations under the License.
 import inspect
 import json
 import logging
-import os.path
 import time
-import subprocess
 
 from MaxiNet.Frontend import maxinet
 from tinyrpc.dispatch import public
@@ -28,8 +26,8 @@ from mininet.node import OVSSwitch
 import configuration
 from publisher import Publisher
 from rpc_server import RPCServer
+import ssh_tools
 import topology
-import transport_api
 
 import traceback
 
@@ -61,6 +59,8 @@ class NetworkSimulator(object):
         self.cluster = maxinet.Cluster()
         self.__experiment = None
 
+        self.transport_api = configuration.get_transport_api()()
+
         self.topology = None
 
     def start(self):
@@ -71,11 +71,31 @@ class NetworkSimulator(object):
 
     def stop(self):
         """Stop the network simulator."""
-        configuration.get_transport_api().finalize()
+        self.__reset()
         self.rpc_server.stop()
+        self.cluster.remove_workers()
+
+    def __reset(self, clean_working_directory=False):
+        """Resets the simulator.
+
+        Args:
+            clean_working_directory: If True, remove content of working directory on workers.
+        """
+        logger.debug("Resetting network simulator")
+        if self.transport_api:
+            self.transport_api.reset()
+
+        # Give ProcessManager time to stop
+        time.sleep(1)
+
+        if clean_working_directory:
+            # Cleanup the working directory on each worker
+            for worker in self.cluster.workers():
+                rm_command = "rm -rf {}/*".format(configuration.get_worker_working_directory())
+                ssh_tools.worker_ssh(worker, rm_command)
+
         if self.__experiment:
             self.__experiment.stop()
-        self.cluster.remove_workers()
 
     @public
     def start_simulation(self, topo):
@@ -105,53 +125,31 @@ class NetworkSimulator(object):
             self.start_simulation.__name__))
         logger.debug("topology:\n{}".format(json.dumps(topo, indent=4)))
 
-        configuration.get_transport_api().init()
+        self.__reset(clean_working_directory=True)
+
+        # Create topology object
+        topology_class = None
+        for key, value in inspect.getmembers(topology, inspect.isclass):
+            if key == topo["type"]:
+                topology_class = value
+                break
+        if not topology_class:
+            logger.error("topology class \"%{}\" not found.".format(
+                topo["type"]))
+            return False
+
+        self.topology = topology_class(**topo["arguments"])
+
+        self.__experiment = maxinet.Experiment(
+            self.cluster, self.topology) #switch=OVSSwitch)
+        self.__experiment.setup()
+
+        # for host in self.__experiment.hosts:
+        #     print(host.cmd("ping -c 3 10.0.1.1"))
+
+        # self.__experiment.CLI(locals(), globals())
+
         try:
-            # Copy transport api executables onto workers
-            for worker in self.cluster.worker:
-                dest_dir = transport_api.TransportAPI.get_remote_transport_bin_path()
-                rm_cmd = "ssh %s sudo rm -rf %s" % (worker.hn(), dest_dir)
-                mkdir_cmd = "ssh %s sudo mkdir -p %s" % (
-                    worker.hn(), os.path.dirname(dest_dir))
-                copy_cmd = "scp -r ./transport_bin %s:" % (worker.hn())
-                mv_cmd = "ssh %s sudo mv transport_bin %s" % (
-                    worker.hn(), dest_dir)
-                subprocess.check_output(rm_cmd.split())
-                subprocess.check_output(mkdir_cmd.split())
-                subprocess.check_output(copy_cmd.split())
-                subprocess.check_output(mv_cmd.split())
-
-                try:
-                    # TODO transport API independent cleanup
-                    kill_cmd = "ssh %s sudo killall tcp_receiver" % worker.hn()
-                    subprocess.check_output(kill_cmd.split())
-                except Exception:
-                    pass
-
-            # Create topology object
-            topology_class = None
-            for key, value in inspect.getmembers(topology, inspect.isclass):
-                if key == topo["type"]:
-                    topology_class = value
-                    break
-            if not topology_class:
-                logger.error("topology class \"%{}\" not found.".format(
-                    topo["type"]))
-                return False
-
-            self.topology = topology_class(**topo["arguments"])
-
-            # Reset & start experiment
-            if self.__experiment:
-                for host in self.__experiment.hosts:
-                    # tear down transmission api
-                    configuration.get_transport_api().teardown_node(host)
-                self.__experiment.stop()
-
-            self.__experiment = maxinet.Experiment(
-                self.cluster, self.topology, switch=OVSSwitch)
-            self.__experiment.setup()
-
             # start traffGen on all emulated Hosts!
 
             hosts_per_rack = 20
@@ -180,28 +178,22 @@ class NetworkSimulator(object):
 
                 host.cmd("/home/schwabe/trafficGen/trafficGenerator/trafficServer2/trafficServer2 &>/dev/null &")
 
-                # setup transport api
-                configuration.get_transport_api().setup_node(host)
-
             # send start command to all traffGen processes.
-            time.sleep(5)
-
-#            for host in self.__experiment.hosts:
-#                print(host.cmd("ping -c 3 10.0.1.1"))
-
-#            self.__experiment.CLI(locals(), globals())
-            
             for w in self.cluster.workers():
                 w.run_cmd("killall -s USR2 traffGen &")
-
-            result = {
-                "type": "SIMULATION_STARTED",
-                "data": {}}
-            self.publisher.publish("DEFAULT", result)
-
-            return True
         except:
             traceback.print_exc()
+
+        time.sleep(5)
+
+        self.transport_api.init(self.__experiment.hosts)
+
+        result = {
+            "type": "SIMULATION_STARTED",
+            "data": {}}
+        self.publisher.publish("DEFAULT", result)
+
+        return True
 
     @public
     def register_coflow(self, coflow_description):
@@ -227,7 +219,7 @@ class NetworkSimulator(object):
         logger.info("RPC function {} invoked".format(
             self.register_coflow.__name__))
 
-        return configuration.get_transport_api().register_coflow(
+        return self.transport_api.register_coflow(
             coflow_description)
 
     @public
@@ -246,8 +238,7 @@ class NetworkSimulator(object):
         logger.info("RPC function {} invoked".format(
             self.unregister_coflow.__name__))
 
-        return configuration.get_transport_api().unregister_coflow(
-            coflow_id)
+        return self.transport_api.unregister_coflow(coflow_id)
 
     @public
     def transmit_n_bytes(self, coflow_id, source, destination, n_bytes,
@@ -267,7 +258,7 @@ class NetworkSimulator(object):
             subscription_key: Key under which the result will be published.
 
         Returns:
-            transmission id of type integer (unique).
+            transmission id of type integer (unique) or -1 if failed.
         """
         logger.info("RPC function {} invoked".format(
             self.transmit_n_bytes.__name__))
@@ -280,7 +271,7 @@ class NetworkSimulator(object):
         mn_destination = self.__experiment.get_node(
             self.topology.get_mn_hostname(destination))
 
-        return configuration.get_transport_api().transmit_n_bytes(
+        return self.transport_api.transmit_n_bytes(
             coflow_id, mn_source, mn_destination, n_bytes, subscription_key)
 
     @classmethod
