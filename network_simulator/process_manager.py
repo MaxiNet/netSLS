@@ -56,7 +56,7 @@ class ProcessManager(object):
         self.__thread.start()
 
     def stop(self):
-        """Stops the thread and waits for termination"""
+        """Stops the thread and waits for termination."""
         self.__stop.set()
         if self.__thread.isAlive():
             self.__thread.join()
