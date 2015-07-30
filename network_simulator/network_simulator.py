@@ -141,7 +141,7 @@ class NetworkSimulator(object):
         self.topology = topology_class(**topo["arguments"])
 
         self.__experiment = maxinet.Experiment(
-            self.cluster, self.topology) #switch=OVSSwitch)
+            self.cluster, self.topology, switch=OVSSwitch)
         self.__experiment.setup()
 
         # for host in self.__experiment.hosts:
