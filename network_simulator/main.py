@@ -21,6 +21,7 @@ import logging.config
 logging.config.fileConfig("logging.cfg")
 
 from argparse import ArgumentParser
+import os.path
 
 import configuration
 import network_simulator
@@ -34,11 +35,13 @@ def sigint_handler(signum, frame):
     simulator = network_simulator.NetworkSimulator.get_instance()
     simulator.stop()
 
+
 def sigterm_handler(signum, frame):
     """Signal handler for SIGTERM."""
     logger.debug("caught SIGTERM")
     simulator = network_simulator.NetworkSimulator.get_instance()
     simulator.stop()
+
 
 def main():
     parser = ArgumentParser(
@@ -47,7 +50,13 @@ def main():
         '--config', dest='config_path', help='path to configuration file')
     args = parser.parse_args()
 
-    configuration.read(args.config_path)
+    config_path = args.config_path
+    if not config_path:
+        if os.path.isfile("network_simulator.cfg"):
+            config_path = "network_simulator.cfg"
+        elif os.path.isfile(os.path.expanduser("~/.network_simulator.cfg")):
+            config_path = os.path.expanduser("~/.network_simulator.cfg")
+    configuration.read(config_path)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
     signal.signal(signal.SIGINT, sigint_handler)

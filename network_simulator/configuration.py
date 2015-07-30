@@ -16,9 +16,12 @@ limitations under the License.
 
 from ConfigParser import ConfigParser
 import inspect
+import logging
 from os.path import isfile, abspath
 
 import transport_api
+
+logger = logging.getLogger(__name__)
 
 _CONFIG_PARSER = ConfigParser()
 
@@ -30,10 +33,12 @@ def read(path):
         path: Path to the configuration file.
     """
     if not path:
+        logger.info("No configuration file found. Using defaults.")
         return
     if not isfile(path):
         raise Exception("Configuration file '%s' does not exist." % path)
 
+    logger.info("Reading configuration from {}".format(abspath(path)))
     global _CONFIG_PARSER
     _CONFIG_PARSER.read(path)
 
