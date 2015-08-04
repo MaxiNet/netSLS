@@ -60,11 +60,6 @@
     </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>hadoop/etc/hadoop</directory>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -88,6 +83,11 @@
                 </executions>
                 <configuration>
                     <mainClass>org.apache.hadoop.yarn.sls.SLSRunner</mainClass>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>
+                            ${project.basedir}/hadoop/etc/hadoop
+                        </additionalClasspathElement>
+                    </additionalClasspathElements>
                 </configuration>
             </plugin>
         </plugins>
