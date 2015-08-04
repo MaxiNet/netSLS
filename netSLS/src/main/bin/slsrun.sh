@@ -72,6 +72,11 @@ parseArgs() {
 
 ###############################################################################
 calculateClasspath() {
+  if [ -z ${HADOOP_PREFIX} ]; then
+    HADOOP_PREFIX="hadoop"
+  fi
+  PATH=${PATH}:${HADOOP_PREFIX}/bin
+
   HADOOP_BASE=`which hadoop`
   HADOOP_BASE=`dirname $HADOOP_BASE`
   DEFAULT_LIBEXEC_DIR=${HADOOP_BASE}/../libexec
