@@ -3,5 +3,10 @@
 cd sls
 mvn compile
 
+if [[ $? != "0" ]]; then
+  echo "ERROR: Failed to compile sls"
+  exit 1
+fi
+
 cd ../network_simulator
 ./setup_virtualenv.sh
