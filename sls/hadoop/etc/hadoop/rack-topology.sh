@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 while [ $# -gt 0 ] ; do
 	nodeArg=$1
 	
