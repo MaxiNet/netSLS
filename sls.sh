@@ -21,7 +21,7 @@ fi
 
 cd sls
 
-OUTPUT_DIRECTORY="/tmp/netSLS/output"
+OUTPUT_DIRECTORY="/tmp/sls"
 mkdir -p ${OUTPUT_DIRECTORY}
 
 ARGS="-inputsls ${TRACE_FILE}"
