@@ -24,7 +24,7 @@ from argparse import ArgumentParser
 import os.path
 
 import configuration
-import network_simulator
+import network_emulator
 import signal
 
 logger = logging.getLogger(__name__)
@@ -32,37 +32,37 @@ logger = logging.getLogger(__name__)
 def sigint_handler(signum, frame):
     """Signal handler for SIGINT."""
     logger.debug("caught SIGINT")
-    simulator = network_simulator.NetworkSimulator.get_instance()
-    simulator.stop()
+    emulator = network_emulator.NetworkEmulator.get_instance()
+    emulator.stop()
 
 
 def sigterm_handler(signum, frame):
     """Signal handler for SIGTERM."""
     logger.debug("caught SIGTERM")
-    simulator = network_simulator.NetworkSimulator.get_instance()
-    simulator.stop()
+    emulator = network_emulator.NetworkEmulator.get_instance()
+    emulator.stop()
 
 
 def main():
     parser = ArgumentParser(
-        description="Network simulator for the hadoop coflow simulator")
+        description="Network emulator for netSLS")
     parser.add_argument(
         '--config', dest='config_path', help='path to configuration file')
     args = parser.parse_args()
 
     config_path = args.config_path
     if not config_path:
-        if os.path.isfile("network_simulator.cfg"):
-            config_path = "network_simulator.cfg"
-        elif os.path.isfile(os.path.expanduser("~/.network_simulator.cfg")):
-            config_path = os.path.expanduser("~/.network_simulator.cfg")
+        if os.path.isfile("network_emulator.cfg"):
+            config_path = "network_emulator.cfg"
+        elif os.path.isfile(os.path.expanduser("~/.network_emulator.cfg")):
+            config_path = os.path.expanduser("~/.network_emulator.cfg")
     configuration.read(config_path)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
     signal.signal(signal.SIGINT, sigint_handler)
 
-    simulator = network_simulator.NetworkSimulator.get_instance()
-    simulator.start()
+    emulator = network_emulator.NetworkEmulator.get_instance()
+    emulator.start()
 
 if __name__ == "__main__":
     main()

@@ -125,9 +125,9 @@ public class NMSimulator extends TaskRunner.Task {
     // Setup zmq subscriber, subscribe to this node's
     subscriptionKey = this.node.getHostName();
 
-    if (SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+    if (SLSRunner.getInstance().isNetworkEmulatorEnabled()) {
       zmqSubscriber = SLSRunner.getInstance().getZmqContext().socket(ZMQ.SUB);
-      zmqSubscriber.connect(SLSRunner.getInstance().getConf().get(SLSConfiguration.NETWORKSIMULATOR_ZMQ_URL));
+      zmqSubscriber.connect(SLSRunner.getInstance().getConf().get(SLSConfiguration.NETWORKEMULATOR_ZMQ_URL));
       zmqSubscriber.subscribe(subscriptionKey.getBytes());
     }
   }
@@ -140,7 +140,7 @@ public class NMSimulator extends TaskRunner.Task {
   @Override
   public void middleStep() throws Exception {
     // Check for completed transmissions
-    if (SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+    if (SLSRunner.getInstance().isNetworkEmulatorEnabled()) {
       byte[] msg = zmqSubscriber.recv(ZMQ.DONTWAIT);
       while (msg != null) {
         String message = new String(msg).split("\n")[1];

@@ -78,17 +78,17 @@
     <value>org.apache.hadoop.yarn.sls.scheduler.CapacitySchedulerMetrics</value>
   </property>
 
-  <!-- Networksimulator configuration -->
+  <!-- NetworkEmulator configuration -->
   <property>
-    <name>yarn.sls.networksimulator.enabled</name>
+    <name>yarn.sls.networkemulator.enabled</name>
     <value>true</value>
   </property>
   <property>
-    <name>yarn.sls.networksimulator.zmq.url</name>
+    <name>yarn.sls.networkemulator.zmq.url</name>
     <value>tcp://localhost:5500</value>
   </property>
   <property>
-    <name>yarn.sls.networksimulator.rpc.url</name>
+    <name>yarn.sls.networkemulator.rpc.url</name>
     <value>http://localhost:5501</value>
   </property>
 </configuration>

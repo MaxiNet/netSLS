@@ -18,7 +18,7 @@ import logging
 import os.path
 
 import configuration
-import network_simulator
+import network_emulator
 import process_manager
 import process
 import ssh_tools
@@ -112,7 +112,7 @@ class TransportAPI(object):
         pass
 
     def _reset_node(self, node):
-        """Reset a MaxiNet node when the simulation is stopped.
+        """Reset a MaxiNet node when the emulation is stopped.
 
         Args:
             node: MaxiNet node to reset.
@@ -166,7 +166,7 @@ class TransportTCP(TransportAPI):
 
     def transmit_n_bytes(self, coflow_id, source, destination, n_bytes,
                          subscription_key):
-        topology = network_simulator.NetworkSimulator.get_instance().topology
+        topology = network_emulator.NetworkEmulator.get_instance().topology
         destination_ip = topology.get_ip_address(destination.nn)
 
         trans_command = "%s %s %i %i" % (

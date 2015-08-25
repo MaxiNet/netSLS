@@ -19,7 +19,7 @@ import logging
 import time
 
 import configuration
-import network_simulator
+import network_emulator
 import threading
 import transport_api
 import utils
@@ -150,7 +150,7 @@ class TransmissionProcess(Process):
                 "duration": (self.end_time - self.start_time)
             }
         }
-        network_simulator.NetworkSimulator.get_instance().publisher.publish(
+        network_emulator.NetworkEmulator.get_instance().publisher.publish(
             self.__subscription_key, json.dumps(result_string))
 
     def _terminated_failingly(self):
@@ -162,7 +162,7 @@ class TransmissionProcess(Process):
                 "transmission_id": self.transmission_id
             }
         }
-        network_simulator.NetworkSimulator.get_instance().publisher.publish(
+        network_emulator.NetworkEmulator.get_instance().publisher.publish(
             self.__subscription_key, json.dumps(result_string))
 
 

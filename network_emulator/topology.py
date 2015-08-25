@@ -22,9 +22,9 @@ from mininet.topo import Topo as MiniNetTopology
 logger = logging.getLogger(__name__)
 
 class Topology(MiniNetTopology):
-    """Basis for all topologies in the network simulator.
+    """Basis for all topologies in the network emulator.
 
-    The network simulator gets a list of racks and hosts when start_simulation()
+    The network emulator gets a list of racks and hosts when start_emulation()
     is called. The constructor establishes a topology with the corresponding
     ToR-switches and hosts.
     Every ToR-switch corresponds to one rack. The switch is labeled with the

@@ -73,11 +73,11 @@ public class SLSConfiguration extends Configuration {
   public static final String CONTAINER_VCORES = CONTAINER_PREFIX + "vcores";
   public static final int CONTAINER_VCORES_DEFAULT = 1;
 
-  // network simulator
-  public static final String NETWORKSIMULATOR_ENABLED = PREFIX + "networksimulator.enabled";
-  public static final boolean NETWORKSIMULATOR_ENABLED_DEFAULT = true;
-  public static final String NETWORKSIMULATOR_RPC_URL = PREFIX + "networksimulator.rpc.url";
-  public static final String NETWORKSIMULATOR_ZMQ_URL = PREFIX + "networksimulator.zmq.url";
+  // network emulator
+  public static final String NETWORKEMULATOR_ENABLED = PREFIX + "networkemulator.enabled";
+  public static final boolean NETWORKEMULATOR_ENABLED_DEFAULT = true;
+  public static final String NETWORKEMULATOR_RPC_URL = PREFIX + "networkemulator.rpc.url";
+  public static final String NETWORKEMULATOR_ZMQ_URL = PREFIX + "networkemulator.zmq.url";
 
   // completed tasks logger
   public static final String COMPLETED_TASKS_LOGGER_PATH = PREFIX + "completedtaskslogger.path";

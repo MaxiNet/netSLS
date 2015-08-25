@@ -97,7 +97,7 @@ class TestRPCFunctions(unittest.TestCase):
         # Cross-test variables
         cls.coflow_id = ""
 
-    def test_1_start_simulation(self):
+    def test_1_start_emulation(self):
         cls = self.__class__
 
         topology = {
@@ -112,7 +112,7 @@ class TestRPCFunctions(unittest.TestCase):
             }
         }
         try:
-            result = cls.remote_server.start_simulation(topology)
+            result = cls.remote_server.start_emulation(topology)
         except requests.exceptions.ConnectionError:
             self.assertTrue(False, msg="RPC connection refused")
         logger.debug("[ZMQ] %s" % cls.subscriber.recv().splitlines()[1])
@@ -155,7 +155,7 @@ class TestRPCFunctions(unittest.TestCase):
             sender.join()
             self.assertNotEqual(sender.result, "CONNECTION_REFUSED", msg="RPC connection refused")
             self.assertNotEqual(sender.result, "FAILED_TO_START",
-                                msg="Failed to start transmission. Check Network simulator for details")
+                                msg="Failed to start transmission. Check Network emulator for details")
             self.assertEqual(sender.result, "TRANSMISSION_SUCCESSFUL")
 
 if __name__ == '__main__':

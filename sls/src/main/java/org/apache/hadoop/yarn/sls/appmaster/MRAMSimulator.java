@@ -43,7 +43,7 @@ import org.apache.hadoop.yarn.security.AMRMTokenIdentifier;
 import org.apache.hadoop.yarn.server.resourcemanager.ResourceManager;
 import org.apache.hadoop.yarn.server.utils.BuilderUtils;
 
-import org.apache.hadoop.yarn.sls.networksimulator.NetworkSimulatorClient;
+import org.apache.hadoop.yarn.sls.networkemulator.NetworkEmulatorClient;
 import org.apache.hadoop.yarn.sls.scheduler.ContainerSimulator;
 import org.apache.hadoop.yarn.sls.SLSRunner;
 import org.apache.log4j.Logger;
@@ -149,11 +149,11 @@ public class MRAMSimulator extends AMSimulator {
   }
 
   private void registerCoflow() throws Exception {
-    if (! SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+    if (! SLSRunner.getInstance().isNetworkEmulatorEnabled()) {
       return;
     }
 
-    NetworkSimulatorClient nsClient = new NetworkSimulatorClient();
+    NetworkEmulatorClient nsClient = new NetworkEmulatorClient();
     try {
       coflowId = nsClient.registerCoflow();
     } catch (Throwable t) {
@@ -162,11 +162,11 @@ public class MRAMSimulator extends AMSimulator {
   }
 
   private void unregisterCoflow() throws Exception {
-    if (! SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+    if (! SLSRunner.getInstance().isNetworkEmulatorEnabled()) {
       return;
     }
 
-    NetworkSimulatorClient nsClient = new NetworkSimulatorClient();
+    NetworkEmulatorClient nsClient = new NetworkEmulatorClient();
 
     if (coflowId == null) {
       throw new Exception("Failed to unregister coflow: no coflow registered.");

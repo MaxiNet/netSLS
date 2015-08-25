@@ -8,5 +8,5 @@ if [[ $? != "0" ]]; then
   exit 1
 fi
 
-cd ../network_simulator
+cd ../network_emulator
 ./setup_virtualenv.sh

@@ -31,7 +31,7 @@ import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.sls.SLSRunner;
 import org.apache.hadoop.yarn.sls.appmaster.AMSimulator;
 import org.apache.hadoop.yarn.sls.appmaster.MRAMSimulator;
-import org.apache.hadoop.yarn.sls.networksimulator.NetworkSimulatorClient;
+import org.apache.hadoop.yarn.sls.networkemulator.NetworkEmulatorClient;
 import org.apache.hadoop.yarn.sls.utils.SLSUtils;
 
 @Private
@@ -120,7 +120,7 @@ public class ContainerSimulator implements Delayed {
    * respectively.
    */
   public void startTransmission(String subscriptionKey) {
-    if (! SLSRunner.getInstance().isNetworkSimulatorEnabled()) {
+    if (! SLSRunner.getInstance().isNetworkEmulatorEnabled()) {
       return;
     }
 
@@ -142,7 +142,7 @@ public class ContainerSimulator implements Delayed {
       }
     }
 
-    NetworkSimulatorClient nsClient = new NetworkSimulatorClient();
+    NetworkEmulatorClient nsClient = new NetworkEmulatorClient();
     String coflowId = amSimulator.getCoflowId();
     String destination = assignedContainer.getNodeId().getHost();
     if (type.equals("map")) {

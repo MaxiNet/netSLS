@@ -44,8 +44,8 @@ import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNode;
 import org.apache.hadoop.yarn.sls.appmaster.AMSimulator;
 import org.apache.hadoop.yarn.sls.conf.SLSConfiguration;
-import org.apache.hadoop.yarn.sls.networksimulator.NetworkSimulatorClient;
-import org.apache.hadoop.yarn.sls.networksimulator.Topology;
+import org.apache.hadoop.yarn.sls.networkemulator.NetworkEmulatorClient;
+import org.apache.hadoop.yarn.sls.networkemulator.Topology;
 import org.apache.hadoop.yarn.sls.nodemanager.NMSimulator;
 import org.apache.hadoop.yarn.sls.scheduler.ContainerSimulator;
 import org.apache.hadoop.yarn.sls.scheduler.ResourceSchedulerWrapper;
@@ -114,12 +114,12 @@ public class SLSRunner {
   private boolean isSLS;
 
   /**
-   * Determines whether network simulator is enabled.
+   * Determines whether network emulator is enabled.
    */
-  private boolean networkSimulatorEnabled;
+  private boolean networkEmulatorEnabled;
 
   /**
-   * ZMQ context for network simulator async callbacks.
+   * ZMQ context for network emulator async callbacks.
    */
   private ZMQ.Context zmqContext;
 
@@ -170,8 +170,8 @@ public class SLSRunner {
       }
     }
 
-    this.networkSimulatorEnabled = conf.getBoolean(SLSConfiguration.NETWORKSIMULATOR_ENABLED,
-        SLSConfiguration.NETWORKSIMULATOR_ENABLED_DEFAULT);
+    this.networkEmulatorEnabled = conf.getBoolean(SLSConfiguration.NETWORKEMULATOR_ENABLED,
+        SLSConfiguration.NETWORKEMULATOR_ENABLED_DEFAULT);
 
     this.zmqContext = ZMQ.context(1);
 
@@ -196,8 +196,8 @@ public class SLSRunner {
     ((ResourceSchedulerWrapper) rm.getResourceScheduler())
                             .setTrackedAppSet(this.trackedApps);
 
-    // start network simulation
-    startNetworkSimulation();
+    // start network emulation
+    startNetworkEmulator();
 
     Thread t = new Thread(this.completedTasksLogger);
     //t.start();
@@ -210,15 +210,15 @@ public class SLSRunner {
     runner.start();
   }
 
-  private void startNetworkSimulation() throws Throwable {
+  private void startNetworkEmulator() throws Throwable {
     Set<RMNode> nodes = new HashSet<RMNode>();
     for (NMSimulator nm : nmMap.values()) {
       nodes.add(nm.getNode());
     }
 
-    if (isNetworkSimulatorEnabled()) {
-      NetworkSimulatorClient nwClient = new NetworkSimulatorClient();
-      if (! nwClient.startSimulation(new Topology(nodes))) {
+    if (isNetworkEmulatorEnabled()) {
+      NetworkEmulatorClient nwClient = new NetworkEmulatorClient();
+      if (! nwClient.startEmulation(new Topology(nodes))) {
         throw new RuntimeException("RPC function start_simulation returned false");
       }
     }
@@ -567,8 +567,8 @@ public class SLSRunner {
     return conf;
   }
 
-  public boolean isNetworkSimulatorEnabled() {
-    return networkSimulatorEnabled;
+  public boolean isNetworkEmulatorEnabled() {
+    return networkEmulatorEnabled;
   }
 
   public static void main(String args[]) throws Throwable {

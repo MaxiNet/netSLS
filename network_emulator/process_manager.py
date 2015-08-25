@@ -21,7 +21,7 @@ import threading
 import time
 
 import configuration
-import network_simulator
+import network_emulator
 import process
 import ssh_tools
 import utils
@@ -64,11 +64,11 @@ class ProcessManager(object):
     def run(self):
         self.__stop.clear()
 
-        for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
+        for worker in network_emulator.NetworkEmulator.get_instance().cluster.worker:
             self.__running_processes[worker] = dict()
 
         while not self.__stop.isSet():
-            for worker in network_simulator.NetworkSimulator.get_instance().cluster.worker:
+            for worker in network_emulator.NetworkEmulator.get_instance().cluster.worker:
                 successful_processes = []
                 try:
                     successful_processes = self.__worker_get_pids_from_file(

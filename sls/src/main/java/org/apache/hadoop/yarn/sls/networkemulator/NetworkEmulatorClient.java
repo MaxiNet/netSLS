@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.yarn.sls.networksimulator;
+package org.apache.hadoop.yarn.sls.networkemulator;
 
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
 import org.apache.hadoop.yarn.sls.SLSRunner;
@@ -25,23 +25,23 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NetworkSimulatorClient {
+public class NetworkEmulatorClient {
   // logger
-  public final static Logger LOG = Logger.getLogger(NetworkSimulatorClient.class);
+  public final static Logger LOG = Logger.getLogger(NetworkEmulatorClient.class);
 
   private JsonRpcHttpClient rpcClient;
 
-  public NetworkSimulatorClient() {
+  public NetworkEmulatorClient() {
     try {
-      rpcClient = new JsonRpcHttpClient(new URL(SLSRunner.getInstance().getConf().get(SLSConfiguration.NETWORKSIMULATOR_RPC_URL)));
+      rpcClient = new JsonRpcHttpClient(new URL(SLSRunner.getInstance().getConf().get(SLSConfiguration.NETWORKEMULATOR_RPC_URL)));
     } catch (MalformedURLException e) {
       e.printStackTrace();
     }
   }
 
-  public Boolean startSimulation(Topology topology) throws Throwable {
-    LOG.info("Invoking start_simulation");
-    return rpcClient.invoke("start_simulation", new Object[]{topology.toJson()}, Boolean.class);
+  public Boolean startEmulation(Topology topology) throws Throwable {
+    LOG.info("Invoking start_emulation");
+    return rpcClient.invoke("start_emulation", new Object[]{topology.toJson()}, Boolean.class);
   }
 
   public String registerCoflow() throws Throwable {

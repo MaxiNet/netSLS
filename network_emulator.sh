@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-cd network_simulator
+cd network_emulator
 
 env/bin/python main.py

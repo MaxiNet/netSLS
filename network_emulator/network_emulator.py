@@ -18,6 +18,7 @@ import inspect
 import json
 import logging
 import time
+from subprocess import CalledProcessError
 
 from MaxiNet.Frontend import maxinet
 from tinyrpc.dispatch import public
@@ -34,8 +35,8 @@ import traceback
 logger = logging.getLogger(__name__)
 
 
-class NetworkSimulator(object):
-    """Implementation of the network simulators public interface.
+class NetworkEmulator(object):
+    """Implementation of the network emulators public interface.
 
     This class implements the public interface made available through the RPC
     server.
@@ -64,24 +65,24 @@ class NetworkSimulator(object):
         self.topology = None
 
     def start(self):
-        """Start the network simulator."""
+        """Start the network emulator."""
         self.cluster.add_workers()
         # start serving rpc calls forever
         self.rpc_server.serve_forever()
 
     def stop(self):
-        """Stop the network simulator."""
+        """Stop the network emulator."""
         self.__reset()
         self.rpc_server.stop()
         self.cluster.remove_workers()
 
     def __reset(self, clean_working_directory=False):
-        """Resets the simulator.
+        """Resets the emulator.
 
         Args:
             clean_working_directory: If True, remove content of working directory on workers.
         """
-        logger.debug("Resetting network simulator")
+        logger.debug("Resetting network emulator")
         if self.transport_api:
             self.transport_api.reset()
 
@@ -92,14 +93,17 @@ class NetworkSimulator(object):
             # Cleanup the working directory on each worker
             for worker in self.cluster.workers():
                 rm_command = "rm -rf {}/*".format(configuration.get_worker_working_directory())
-                ssh_tools.worker_ssh(worker, rm_command)
+                try:
+                    ssh_tools.worker_ssh(worker, rm_command)
+                except CalledProcessError:
+                    pass
 
         if self.__experiment:
             self.__experiment.stop()
 
     @public
-    def start_simulation(self, topo):
-        """RPC: Start a new simulation.
+    def start_emulation(self, topo):
+        """RPC: Start a new emulation.
 
         Starts a new MaxiNet experiment with the given topology. If there is
         an experiment running MaxiNet is reset first.
@@ -122,7 +126,7 @@ class NetworkSimulator(object):
             True on success, False otherwise.
         """
         logger.info("RPC function {} invoked".format(
-            self.start_simulation.__name__))
+            self.start_emulation.__name__))
         logger.debug("topology:\n{}".format(json.dumps(topo, indent=4)))
 
         self.__reset(clean_working_directory=True)
@@ -189,7 +193,7 @@ class NetworkSimulator(object):
         self.transport_api.init(self.__experiment.hosts)
 
         result = {
-            "type": "SIMULATION_STARTED",
+            "type": "EMULATION_STARTED",
             "data": {}}
         self.publisher.publish("DEFAULT", result)
 
@@ -278,5 +282,5 @@ class NetworkSimulator(object):
     def get_instance(cls):
         """Returns a singleton instance of this class."""
         if not cls._INSTANCE:
-            cls._INSTANCE = NetworkSimulator()
+            cls._INSTANCE = NetworkEmulator()
         return cls._INSTANCE

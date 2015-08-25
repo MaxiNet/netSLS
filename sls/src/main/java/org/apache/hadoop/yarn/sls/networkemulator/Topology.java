@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.yarn.sls.networksimulator;
+package org.apache.hadoop.yarn.sls.networkemulator;
 
 import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNode;
 
