@@ -77,8 +77,11 @@ and copy the ssh key to all workers.
 
 * Copy the MaxiNet configuration:
 ```
-scp maxinet@worker1:/etc/MaxiNet.cfg ~/netSLS/network_emulator/MaxiNet.cfg
+scp worker1:/etc/MaxiNet.cfg ~/netSLS/network_emulator/MaxiNet.cfg
 ```
+Make sure, that the addresses in MaxiNet.cfg match the addresses in
+~/.ssh/config. Otherwise modify the workers' and the copied MaxiNet.cfg file to
+match these addresses. MaxiNet needs to be restarted at this point.
 
 * Create a python virtualenv and install dependencies (might require additional
   packages to be installed, cf. Quickstart):
