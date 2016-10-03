@@ -20,7 +20,7 @@ Now install netSLS on worker1:
 ```
 sudo apt-get update
 sudo apt-get install openjdk-7-jdk maven virtualenv libzmq-dev python-dev
-git clone https://github.com/wette/netSLS.git
+git clone https://github.com/MaxiNet/netSLS.git
 cd netSLS
 ./setup.sh
 ```
